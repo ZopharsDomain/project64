@@ -1900,10 +1900,19 @@ void R4300iOp::SPECIAL_DMULTU()
 
 void R4300iOp::SPECIAL_DDIV()
 {
+
     if (m_GPR[m_Opcode.rt].UDW != 0)
     {
-        m_RegLO.DW = m_GPR[m_Opcode.rs].DW / m_GPR[m_Opcode.rt].DW;
-        m_RegHI.DW = m_GPR[m_Opcode.rs].DW % m_GPR[m_Opcode.rt].DW;
+        if (m_GPR[m_Opcode.rs].DW != 0x8000000000000000)
+        {
+            m_RegLO.DW = m_GPR[m_Opcode.rs].DW / m_GPR[m_Opcode.rt].DW;
+            m_RegHI.DW = m_GPR[m_Opcode.rs].DW % m_GPR[m_Opcode.rt].DW;
+        }
+        else
+        {
+            m_RegLO.DW = m_GPR[m_Opcode.rs].DW;
+            m_RegHI.DW = 0;
+        }
     }
     else
     {
