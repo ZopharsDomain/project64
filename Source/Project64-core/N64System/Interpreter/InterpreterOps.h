@@ -317,8 +317,8 @@ private:
     Func Jump_CoP2[32];
 
     bool TestCop1UsableException(void);
-    bool CheckFPUInput32(const float & Value);
-    bool CheckFPUInputs32(const float & Value, const float & Value2);
+    bool CheckFPUInput32(const uint32_t & Value);
+    bool CheckFPUInputs32(const uint32_t & Value, const uint32_t & Value2);
     bool CheckFPUInput32Conv(const float & Value);
     bool CheckFPUInput64(const double & Value);
     bool CheckFPUInputs64(const double & Value, const double & Value2);
