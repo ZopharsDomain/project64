@@ -121,7 +121,10 @@ void R4300iOp::ExecuteOps(uint32_t Cycles)
                 g_Settings->SaveBool(Debugger_SteppingOps, true);
             }
 
-            g_Debugger->CPUStepStarted(); // May set stepping ops/skip op
+            if (TrackCPUStepStarted())
+            {
+                g_Debugger->CPUStepStarted(); // May set stepping ops/skip op
+            }
 
             if (isStepping())
             {
@@ -136,7 +139,10 @@ void R4300iOp::ExecuteOps(uint32_t Cycles)
                 continue;
             }
 
-            g_Debugger->CPUStep();
+            if (TrackCPUStep())
+            {
+                g_Debugger->CPUStep();
+            }
         }
 
         (this->*Jump_Opcode[m_Opcode.op])();
@@ -147,7 +153,7 @@ void R4300iOp::ExecuteOps(uint32_t Cycles)
             Cycles -= CountPerOp;
         }
 
-        if (CDebugSettings::HaveDebugger())
+        if (TrackCPUStepEnded())
         {
             g_Debugger->CPUStepEnded();
         }
