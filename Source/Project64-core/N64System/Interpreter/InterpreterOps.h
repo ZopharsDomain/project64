@@ -302,6 +302,9 @@ private:
     double ** m_FPR_D;
     uint32_t * m_FPCR;
     uint32_t & m_LLBit;
+    uint64_t m_InstructionRegion;
+    uint8_t * m_InstructionMemory;
+    uint32_t * m_InstructionPtr;
 
     Func Jump_Opcode[64];
     Func Jump_Special[64];
@@ -328,6 +331,7 @@ private:
     bool CheckFPUInvalidException(void);
     bool InitFpuOperation(FPRoundingMode RoundingModel);
     bool SetFPUException(void);
+    void UpdateInstructionMemory();
 
     static const uint32_t SWL_MASK[4], SWR_MASK[4], LWL_MASK[4], LWR_MASK[4];
     static const int32_t SWL_SHIFT[4], SWR_SHIFT[4], LWL_SHIFT[4], LWR_SHIFT[4];
