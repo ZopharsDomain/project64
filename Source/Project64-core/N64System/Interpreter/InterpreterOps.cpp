@@ -93,10 +93,15 @@ void R4300iOp::ExecuteOps(uint32_t Cycles)
     uint32_t CountPerOp = m_System.CountPerOp();
     int32_t & NextTimer = *g_NextTimer;
     bool CheckTimer = false;
+    bool updateInstructionMemory = true;
 
-    UpdateInstructionMemory();
     while (!Done && Cycles > 0)
     {
+        if (updateInstructionMemory)
+        {
+            UpdateInstructionMemory();
+            updateInstructionMemory = false;
+        }
         m_Opcode.Value = *m_InstructionPtr;
         if (HaveDebugger())
         {
@@ -143,6 +148,10 @@ void R4300iOp::ExecuteOps(uint32_t Cycles)
         }
 
         m_PROGRAM_COUNTER += 4;
+        if ((((uint32_t)m_PROGRAM_COUNTER) & 0xFFFUL) == 0)
+        {
+            updateInstructionMemory = true;
+        }
         m_InstructionPtr++;
 
         switch (PipelineStage)
@@ -177,13 +186,13 @@ void R4300iOp::ExecuteOps(uint32_t Cycles)
                     SystemEvents.ExecuteEvents();
                 }
             }
-            UpdateInstructionMemory();
+            updateInstructionMemory = true;
             break;
         case PIPELINE_STAGE_JUMP_DELAY_SLOT:
             PipelineStage = PIPELINE_STAGE_JUMP;
             m_PROGRAM_COUNTER = JumpToLocation;
             JumpToLocation = JumpDelayLocation;
-            UpdateInstructionMemory();
+            updateInstructionMemory = true;
             break;
         case PIPELINE_STAGE_PERMLOOP_DELAY_DONE:
             m_PROGRAM_COUNTER = JumpToLocation;
@@ -194,15 +203,10 @@ void R4300iOp::ExecuteOps(uint32_t Cycles)
             {
                 SystemEvents.ExecuteEvents();
             }
-            UpdateInstructionMemory();
+            updateInstructionMemory = true;
             break;
         default:
             g_Notify->BreakPoint(__FILE__, __LINE__);
-        }
-
-        if ((((uint32_t)m_PROGRAM_COUNTER) & 0xFFFUL) == 0)
-        {
-            UpdateInstructionMemory();
         }
     }
     g_SystemTimer->UpdateTimers();
