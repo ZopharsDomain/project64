@@ -7449,7 +7449,7 @@ void CX86RecompilerOps::COP0_DMF()
 
 void CX86RecompilerOps::COP0_MT()
 {
-    if (m_Opcode.rd == 6 || m_Opcode.rd == 11)
+    if (m_Opcode.rd == CRegisters::COP0Reg_Wired || m_Opcode.rd == CRegisters::COP0Reg_Compare || m_Opcode.rd == CRegisters::COP0Reg_Count)
     {
         UpdateCounters(m_RegWorkingSet, false, true);
     }
