@@ -1162,7 +1162,7 @@ void CN64System::SyncSystem()
         ErrorFound = true;
     }
 #endif
-    if ((uint32_t)m_Reg.m_PROGRAM_COUNTER != (uint32_t)m_SyncCPU->m_Reg.m_PROGRAM_COUNTER)
+    if (m_Reg.m_PROGRAM_COUNTER != m_SyncCPU->m_Reg.m_PROGRAM_COUNTER)
     {
         ErrorFound = true;
     }
@@ -1341,9 +1341,9 @@ void CN64System::DumpSyncErrors()
             Error.Log("m_CurrentSP,%X,%X\r\n", m_CurrentSP, GPR[29].UW[0]);
         }
 #endif
-        if ((uint32_t)m_Reg.m_PROGRAM_COUNTER != (uint32_t)m_SyncCPU->m_Reg.m_PROGRAM_COUNTER)
+        if (m_Reg.m_PROGRAM_COUNTER != m_SyncCPU->m_Reg.m_PROGRAM_COUNTER)
         {
-            Error.LogF("PROGRAM_COUNTER 0x%08X,         0x%08X\r\n", (uint32_t)m_Reg.m_PROGRAM_COUNTER, (uint32_t)m_SyncCPU->m_Reg.m_PROGRAM_COUNTER);
+            Error.LogF("PROGRAM_COUNTER 0x%08X%08X, 0x%08X%08X\r\n", (uint32_t)(m_Reg.m_PROGRAM_COUNTER >> 32), (uint32_t)m_Reg.m_PROGRAM_COUNTER, (uint32_t)(m_SyncCPU->m_Reg.m_PROGRAM_COUNTER >> 32), (uint32_t)m_SyncCPU->m_Reg.m_PROGRAM_COUNTER);
         }
         if (b32BitCore())
         {
