@@ -9679,6 +9679,8 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::TriggerException), "CRegisters::TriggerException", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitCodeBlock();
         break;
@@ -9689,6 +9691,8 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::TriggerException), "CRegisters::TriggerException", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitCodeBlock();
         break;
@@ -9699,6 +9703,8 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::TriggerException), "CRegisters::TriggerException", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitRegSet.SetBlockCycleCount(0);
         UpdateCounters(ExitRegSet, true, false, false);
@@ -9716,6 +9722,8 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::TriggerAddressException), "CRegisters::TriggerAddressException", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitCodeBlock();
         break;
@@ -9730,6 +9738,8 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::TriggerException), "CRegisters::TriggerException", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitCodeBlock();
         break;
@@ -9740,6 +9750,8 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::TriggerException), "CRegisters::TriggerException", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitCodeBlock();
         break;
@@ -9754,6 +9766,8 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::DoAddressError), "CRegisters::DoAddressError", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitCodeBlock();
         break;
@@ -9767,6 +9781,8 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::DoAddressError), "CRegisters::DoAddressError", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitCodeBlock();
         break;
@@ -9781,6 +9797,8 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::DoAddressError), "CRegisters::DoAddressError", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitCodeBlock();
         break;
@@ -9791,12 +9809,16 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::TriggerException), "CRegisters::TriggerException", 12);
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         ExitCodeBlock();
         break;
     case ExitReason_Exception:
         m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
         m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+        m_Assembler.sar(asmjit::x86::edx, 31);
+        m_Assembler.MoveX86regToVariable(((uint8_t *)&g_Reg->m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER+4", asmjit::x86::edx);
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
         if (TargetPC == (uint32_t)-1)
         {
