@@ -18,6 +18,11 @@
 #include <fenv.h>
 #include <stdio.h>
 
+extern "C"
+{
+#include "softfloat.h"
+}
+
 uint32_t CX86RecompilerOps::m_RoundingModeValue = 0;
 bool CX86RecompilerOps::m_TempMemoryUsed = false;
 uint32_t CX86RecompilerOps::m_TempValue32 = 0;
@@ -8494,6 +8499,12 @@ void CX86RecompilerOps::CompileCheckFPUResult32(int32_t DestReg)
     m_Assembler.fst(asmjit::x86::dword_ptr((uint64_t)&m_TempValue32));
     m_Assembler.MoveVariableToX86reg(TempReg, &m_TempValue32, "TempValue32");
     m_RegWorkingSet.BeforeCallDirect();
+
+    m_Assembler.PushImm32("FE_ALL_EXCEPT", FE_ALL_EXCEPT);
+    m_Assembler.CallFunc((uint32_t)fetestexcept, "fetestexcept");
+    m_Assembler.add(asmjit::x86::esp, 4);
+    m_Assembler.MoveX86regToVariable(&softfloat_exceptionFlags, "softfloat_exceptionFlags", asmjit::x86::eax);
+
     if (m_PipelineStage == PIPELINE_STAGE_JUMP || m_PipelineStage == PIPELINE_STAGE_DELAY_SLOT)
     {
         m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "System->m_PipelineStage", PIPELINE_STAGE_JUMP);
@@ -11636,6 +11647,11 @@ void CX86RecompilerOps::COP1_S_CVT(CRegBase::FPU_ROUND RoundMethod, CRegInfo::FP
         m_Assembler.ldmxcsr(asmjit::x86::dword_ptr((uint64_t)&StatusRegister));
 
         m_RegWorkingSet.BeforeCallDirect();
+        m_Assembler.PushImm32("FE_ALL_EXCEPT", FE_ALL_EXCEPT);
+        m_Assembler.CallFunc((uint32_t)fetestexcept, "fetestexcept");
+        m_Assembler.add(asmjit::x86::esp, 4);
+        m_Assembler.MoveX86regToVariable(&softfloat_exceptionFlags, "softfloat_exceptionFlags", asmjit::x86::eax);
+
         if (m_PipelineStage == PIPELINE_STAGE_JUMP || m_PipelineStage == PIPELINE_STAGE_DELAY_SLOT)
         {
             m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "System->m_PipelineStage", PIPELINE_STAGE_JUMP);
@@ -11670,6 +11686,11 @@ void CX86RecompilerOps::COP1_S_CVT(CRegBase::FPU_ROUND RoundMethod, CRegInfo::FP
         m_Assembler.ldmxcsr(asmjit::x86::dword_ptr((uint64_t)&StatusRegister));
 
         m_RegWorkingSet.BeforeCallDirect();
+        m_Assembler.PushImm32("FE_ALL_EXCEPT", FE_ALL_EXCEPT);
+        m_Assembler.CallFunc((uint32_t)fetestexcept, "fetestexcept");
+        m_Assembler.add(asmjit::x86::esp, 4);
+        m_Assembler.MoveX86regToVariable(&softfloat_exceptionFlags, "softfloat_exceptionFlags", asmjit::x86::eax);
+
         if (m_PipelineStage == PIPELINE_STAGE_JUMP || m_PipelineStage == PIPELINE_STAGE_DELAY_SLOT)
         {
             m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "System->m_PipelineStage", PIPELINE_STAGE_JUMP);
