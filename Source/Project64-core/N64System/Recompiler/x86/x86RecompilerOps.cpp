@@ -611,7 +611,7 @@ void CX86RecompilerOps::Compile_Branch(RecompilerBranchCompare CompareType, bool
                     {
                         g_Notify->BreakPoint(__FILE__, __LINE__);
                     }
-                    m_Assembler.MoveConstToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", m_Section->m_Jump.TargetPC);
+                    m_Assembler.MoveConst64ToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", (int)m_Section->m_Jump.TargetPC);
                 }
                 else if (m_Section->m_Cont.FallThrough)
                 {
@@ -619,7 +619,7 @@ void CX86RecompilerOps::Compile_Branch(RecompilerBranchCompare CompareType, bool
                     {
                         g_Notify->BreakPoint(__FILE__, __LINE__);
                     }
-                    m_Assembler.MoveConstToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", m_Section->m_Cont.TargetPC);
+                    m_Assembler.MoveConst64ToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", (int)m_Section->m_Cont.TargetPC);
                 }
 
                 if (m_Section->m_Jump.LinkLocation.isValid() || m_Section->m_Jump.LinkLocation2.isValid())
@@ -632,7 +632,7 @@ void CX86RecompilerOps::Compile_Branch(RecompilerBranchCompare CompareType, bool
                     m_Assembler.JmpLabel("DoDelaySlot", DelayLinkLocation);
 
                     LinkJump(m_Section->m_Jump);
-                    m_Assembler.MoveConstToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", m_Section->m_Jump.TargetPC);
+                    m_Assembler.MoveConst64ToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", (int)m_Section->m_Jump.TargetPC);
                 }
                 if (m_Section->m_Cont.LinkLocation.isValid() || m_Section->m_Cont.LinkLocation2.isValid())
                 {
@@ -644,7 +644,7 @@ void CX86RecompilerOps::Compile_Branch(RecompilerBranchCompare CompareType, bool
                     m_Assembler.JmpLabel("DoDelaySlot", DelayLinkLocation);
 
                     LinkJump(m_Section->m_Cont);
-                    m_Assembler.MoveConstToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", m_Section->m_Cont.TargetPC);
+                    m_Assembler.MoveConst64ToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", (int)m_Section->m_Cont.TargetPC);
                 }
                 if (DelayLinkLocation.isValid())
                 {
@@ -2288,7 +2288,7 @@ void CX86RecompilerOps::JAL()
         m_Assembler.AddConstToX86Reg(m_RegWorkingSet.GetMipsRegMapLo(31), (m_CompilePC + 8) & ~0xF0000000);
         if ((m_CompilePC & 0xFFC) == 0xFFC)
         {
-            m_Assembler.MoveConstToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", (m_CompilePC & 0xF0000000) + (m_Opcode.target << 2));
+            m_Assembler.MoveConst64ToVariable(&g_System->m_JumpToLocation, "System::m_JumpToLocation", (int32_t)((m_CompilePC & 0xF0000000) + (m_Opcode.target << 2)));
             OverflowDelaySlot(false);
             return;
         }
@@ -4568,7 +4568,14 @@ void CX86RecompilerOps::SPECIAL_JR()
         {
             if (m_RegWorkingSet.IsConst(m_Opcode.rs))
             {
-                m_Assembler.MoveConstToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.GetMipsRegLo(m_Opcode.rs));
+                if (((int)m_CompilePC >> 31) != (m_RegWorkingSet.Is64Bit(m_Opcode.rs) ? (int)m_RegWorkingSet.GetMipsRegHi(m_Opcode.rs) : (m_RegWorkingSet.GetMipsRegLo_S(m_Opcode.rs) >> 31)))
+                {
+                    m_Assembler.MoveConst64ToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.Is64Bit(m_Opcode.rs) ? m_RegWorkingSet.GetMipsReg(m_Opcode.rs) : (int)m_RegWorkingSet.GetMipsRegLo_S(m_Opcode.rs));
+                }
+                else
+                {
+                    m_Assembler.MoveConstToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.GetMipsRegLo(m_Opcode.rs));
+                }
             }
             else if (m_RegWorkingSet.IsMapped(m_Opcode.rs))
             {
