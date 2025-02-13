@@ -10015,11 +10015,6 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
     m_Assembler.CompConstToX86reg(TempReg, (uint32_t)-1);
     asmjit::Label JumpFound = m_Assembler.newLabel();
     m_Assembler.JneLabel(stdstr_f("MemoryReadMap_%X_Found", m_CompilePC).c_str(), JumpFound);
-    uint32_t OpsExecuted = m_RegWorkingSet.GetBlockCycleCount();
-    if (OpsExecuted != 0)
-    {
-        m_Assembler.SubConstFromVariable(OpsExecuted, g_NextTimer, "g_NextTimer");
-    }
     m_Assembler.MoveConstToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_CompilePC);
     if (m_PipelineStage != PIPELINE_STAGE_NORMAL)
     {
@@ -10033,7 +10028,9 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
         m_Assembler.CallThis((uint32_t)(&m_MMU), AddressOf(&CMipsMemoryVM::LW_VAddr32), "CMipsMemoryVM::LW_VAddr32", 12);
         m_Assembler.test(asmjit::x86::al, asmjit::x86::al);
         m_RegWorkingSet.AfterCallDirect();
-        CompileExit((uint32_t)-1, (uint32_t)-1, m_RegWorkingSet, ExitReason_NormalNoSysCheck, false, &CX86Ops::JeLabel);
+        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() + g_System->CountPerOp());
+        CompileExit(m_CompilePC, (uint32_t)-1, m_RegWorkingSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
+        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() - g_System->CountPerOp());
         m_Assembler.MoveConstToX86reg(TempReg, (uint32_t)&m_TempValue32);
         m_Assembler.sub(TempReg, AddressReg);
     }
@@ -10045,7 +10042,9 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
         m_Assembler.CallThis((uint32_t)(&m_MMU), AddressOf(&CMipsMemoryVM::LH_VAddr32), "CMipsMemoryVM::LH_VAddr32", 12);
         m_Assembler.test(asmjit::x86::al, asmjit::x86::al);
         m_RegWorkingSet.AfterCallDirect();
-        CompileExit((uint32_t)-1, (uint32_t)-1, m_RegWorkingSet, ExitReason_NormalNoSysCheck, false, &CX86Ops::JeLabel);
+        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() + g_System->CountPerOp());
+        CompileExit(m_CompilePC, (uint32_t)-1, m_RegWorkingSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
+        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() - g_System->CountPerOp());
         m_Assembler.MoveConstToX86reg(TempReg, (uint32_t)&m_TempValue32);
         m_Assembler.sub(TempReg, AddressReg);
         m_Assembler.xor_(AddressReg, 2);
@@ -10058,7 +10057,9 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
         m_Assembler.CallThis((uint32_t)&m_MMU, AddressOf(&CMipsMemoryVM::LB_VAddr32), "CMipsMemoryVM::LB_VAddr32", 12);
         m_Assembler.test(asmjit::x86::al, asmjit::x86::al);
         m_RegWorkingSet.AfterCallDirect();
-        CompileExit((uint32_t)-1, (uint32_t)-1, m_RegWorkingSet, ExitReason_NormalNoSysCheck, false, &CX86Ops::JeLabel);
+        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() + g_System->CountPerOp());
+        CompileExit(m_CompilePC, (uint32_t)-1, m_RegWorkingSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
+        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() - g_System->CountPerOp());
         m_Assembler.MoveConstToX86reg(TempReg, (uint32_t)&m_TempValue32);
         m_Assembler.sub(TempReg, AddressReg);
         m_Assembler.xor_(AddressReg, 3);
@@ -10066,10 +10067,6 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
     else
     {
         m_Assembler.X86BreakPoint(__FILE__, __LINE__);
-    }
-    if (OpsExecuted != 0)
-    {
-        m_Assembler.AddConstToVariable(g_NextTimer, "g_NextTimer", OpsExecuted);
     }
     if (m_PipelineStage != PIPELINE_STAGE_NORMAL)
     {
