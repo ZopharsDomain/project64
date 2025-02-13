@@ -138,13 +138,13 @@ void CRecompiler::RecompilerMain_Lookup()
         if (!m_MMU.VAddrToPAddr((uint32_t)PROGRAM_COUNTER, PhysicalAddr))
         {
             m_Reg.TriggerAddressException(PROGRAM_COUNTER, EXC_RMISS);
+            PROGRAM_COUNTER = m_System.m_JumpToLocation;
+            m_System.m_PipelineStage = PIPELINE_STAGE_NORMAL;
             if (!m_MMU.VAddrToPAddr((uint32_t)PROGRAM_COUNTER, PhysicalAddr))
             {
                 g_Notify->DisplayError(stdstr_f("Failed to translate PC to a PAddr: %X\n\nEmulation stopped", PROGRAM_COUNTER).c_str());
                 m_EndEmulation = true;
             }
-            PROGRAM_COUNTER = m_System.m_JumpToLocation;
-            m_System.m_PipelineStage = PIPELINE_STAGE_NORMAL;
             continue;
         }
         if (PhysicalAddr < m_System.RdramSize())
