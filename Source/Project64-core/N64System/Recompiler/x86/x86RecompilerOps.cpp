@@ -4544,15 +4544,24 @@ void CX86RecompilerOps::SPECIAL_JR()
         {
             if (m_RegWorkingSet.IsConst(m_Opcode.rs))
             {
-                m_Assembler.MoveConstToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.GetMipsRegLo(m_Opcode.rs));
+                if (((int)m_CompilePC >> 31) != (m_RegWorkingSet.Is64Bit(m_Opcode.rs) ? (int)m_RegWorkingSet.GetMipsRegHi(m_Opcode.rs) : (m_RegWorkingSet.GetMipsRegLo_S(m_Opcode.rs) >> 31)))
+                {
+                    m_Assembler.MoveConst64ToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.Is64Bit(m_Opcode.rs) ? m_RegWorkingSet.GetMipsReg(m_Opcode.rs) : (int)m_RegWorkingSet.GetMipsRegLo_S(m_Opcode.rs));
+                }
+                else
+                {
+                    m_Assembler.MoveConstToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.GetMipsRegLo(m_Opcode.rs));
+                }
             }
             else if (m_RegWorkingSet.IsMapped(m_Opcode.rs))
             {
                 m_Assembler.MoveX86regToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.GetMipsRegMapLo(m_Opcode.rs));
+                m_Assembler.MoveX86regToVariable(((uint8_t *)&m_Reg.m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER + 4", m_RegWorkingSet.Is64Bit(m_Opcode.rs) ? m_RegWorkingSet.GetMipsRegMapHi(m_Opcode.rs) : m_RegWorkingSet.Map_TempReg(x86Reg_Unknown, m_Opcode.rs, true, false));
             }
             else
             {
                 m_Assembler.MoveX86regToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.Map_TempReg(x86Reg_Unknown, m_Opcode.rs, false, false));
+                m_Assembler.MoveX86regToVariable(((uint8_t *)&m_Reg.m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER + 4", m_RegWorkingSet.Map_TempReg(x86Reg_Unknown, m_Opcode.rs, true, false));
             }
         }
         m_PipelineStage = PIPELINE_STAGE_DO_DELAY_SLOT;
@@ -4580,10 +4589,12 @@ void CX86RecompilerOps::SPECIAL_JR()
             else if (m_RegWorkingSet.IsMapped(m_Opcode.rs))
             {
                 m_Assembler.MoveX86regToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.GetMipsRegMapLo(m_Opcode.rs));
+                m_Assembler.MoveX86regToVariable(((uint8_t *)&m_Reg.m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER + 4", m_RegWorkingSet.Is64Bit(m_Opcode.rs) ? m_RegWorkingSet.GetMipsRegMapHi(m_Opcode.rs) : m_RegWorkingSet.Map_TempReg(x86Reg_Unknown, m_Opcode.rs, true, false));
             }
             else
             {
                 m_Assembler.MoveX86regToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.Map_TempReg(x86Reg_Unknown, m_Opcode.rs, false, false));
+                m_Assembler.MoveX86regToVariable(((uint8_t *)&m_Reg.m_PROGRAM_COUNTER) + 4, "PROGRAM_COUNTER + 4", m_RegWorkingSet.Map_TempReg(x86Reg_Unknown, m_Opcode.rs, true, false));
             }
             UpdateCounters(m_RegWorkingSet, true, true, false);
             CompileExit((uint32_t)-1, (uint32_t)-1, m_RegWorkingSet, ExitReason_CheckPCAlignment, true, nullptr);
