@@ -5146,6 +5146,10 @@ void CX86RecompilerOps::SPECIAL_DIV()
             asmjit::Label JumpValidDiv0 = m_Assembler.newLabel();
             m_Assembler.JneLabel(stdstr_f("ValidDiv0_%08X", m_CompilePC).c_str(), JumpValidDiv0);
 
+            m_Assembler.CompConstToX86reg(RegRs, (uint32_t)0x80000000);
+            asmjit::Label JumpValidDiv1 = m_Assembler.newLabel();
+            m_Assembler.JneLabel(stdstr_f("ValidDiv1_%08X", m_CompilePC).c_str(), JumpValidDiv1);
+
             m_Assembler.MoveConstToVariable(&m_Reg.m_LO.UW[0], "_RegLO->UW[0]", 0x80000000);
             m_Assembler.MoveConstToVariable(&m_Reg.m_LO.UW[1], "_RegLO->UW[1]", 0xFFFFFFFF);
             m_Assembler.MoveConstToVariable(&m_Reg.m_HI.UW[0], "_RegHI->UW[0]", 0x00000000);
@@ -5155,6 +5159,7 @@ void CX86RecompilerOps::SPECIAL_DIV()
 
             m_CodeBlock.Log("");
             m_Assembler.bind(JumpValidDiv0);
+            m_Assembler.bind(JumpValidDiv1);
         }
     }
 
@@ -5183,17 +5188,13 @@ void CX86RecompilerOps::SPECIAL_DIV()
     m_Assembler.MoveX86regToVariable(&m_Reg.m_LO.UW[1], "_RegLO->UW[1]", asmjit::x86::eax);
     m_Assembler.MoveX86regToVariable(&m_Reg.m_HI.UW[1], "_RegHI->UW[1]", asmjit::x86::edx);
 
-    if (JumpEnd.isValid() || JumpEnd2.isValid())
+    if (JumpEnd.isValid())
     {
-        m_CodeBlock.Log("");
-        if (JumpEnd.isValid())
-        {
-            m_Assembler.bind(JumpEnd);
-        }
-        if (JumpEnd2.isValid())
-        {
-            m_Assembler.bind(JumpEnd2);
-        }
+        m_Assembler.bind(JumpEnd);
+    }
+    if (JumpEnd2.isValid())
+    {
+        m_Assembler.bind(JumpEnd2);
     }
 }
 
