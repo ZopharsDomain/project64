@@ -9853,7 +9853,7 @@ void CX86RecompilerOps::CompileExit(uint32_t JumpPC, uint32_t TargetPC, CRegInfo
         if (TargetPC == (uint32_t)-1)
         {
             ExitRegSet.SetBlockCycleCount(0);
-            UpdateCounters(ExitRegSet, true, false, false);
+            UpdateCounters(ExitRegSet, false, false, false);
         }
         ExitCodeBlock();
         break;
@@ -9957,6 +9957,10 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
         m_RegWorkingSet.AfterCallDirect();
         CRegInfo ExitRegSet = m_RegWorkingSet;
         ExitRegSet.SetBlockCycleCount(ExitRegSet.GetBlockCycleCount() + g_System->CountPerOp());
+        if (m_Instruction.WritesGPR() > 0)
+        {
+            ExitRegSet.UnMap_GPR(m_Opcode.rt, false);
+        }
         CompileExit((uint32_t)-1, (uint32_t)-1, ExitRegSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
 
         if (m_Instruction.WritesGPR() != 0)
@@ -9996,29 +10000,29 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
     }
 
     asmjit::x86::Gp TempReg = m_RegWorkingSet.Map_TempReg(x86Reg_Unknown, -1, false, false);
+    CRegInfo ExitRegSet = m_RegWorkingSet;
+    ExitRegSet.SetBlockCycleCount(ExitRegSet.GetBlockCycleCount() + g_System->CountPerOp());
+    if (m_Instruction.WritesGPR() > 0)
+    {
+        ExitRegSet.UnMap_GPR(m_Opcode.rt, false);
+    }
     if (ValueSize == 16)
     {
         m_Assembler.MoveX86regToVariable(&m_TempValue32, "TempValue32", AddressReg);
         m_Assembler.test(AddressReg, 1);
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() + g_System->CountPerOp());
-        CompileExit(m_CompilePC, m_CompilePC, m_RegWorkingSet, ExitReason_AddressErrorExceptionRead32, false, &CX86Ops::JneLabel);
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() - g_System->CountPerOp());
+        CompileExit(m_CompilePC, m_CompilePC, ExitRegSet, ExitReason_AddressErrorExceptionRead32, false, &CX86Ops::JneLabel);
     }
     else if (ValueSize == 32)
     {
         m_Assembler.MoveX86regToVariable(&m_TempValue32, "TempValue32", AddressReg);
         m_Assembler.test(AddressReg, 3);
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() + g_System->CountPerOp());
-        CompileExit(m_CompilePC, m_CompilePC, m_RegWorkingSet, ExitReason_AddressErrorExceptionRead32, false, &CX86Ops::JneLabel);
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() - g_System->CountPerOp());
+        CompileExit(m_CompilePC, m_CompilePC, ExitRegSet, ExitReason_AddressErrorExceptionRead32, false, &CX86Ops::JneLabel);
     }
     else if (ValueSize == 64)
     {
         m_Assembler.MoveX86regToVariable(&m_TempValue32, "TempValue32", AddressReg);
         m_Assembler.test(AddressReg, 7);
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() + g_System->CountPerOp());
-        CompileExit(m_CompilePC, m_CompilePC, m_RegWorkingSet, ExitReason_AddressErrorExceptionRead32, false, &CX86Ops::JneLabel);
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() - g_System->CountPerOp());
+        CompileExit(m_CompilePC, m_CompilePC, ExitRegSet, ExitReason_AddressErrorExceptionRead32, false, &CX86Ops::JneLabel);
     }
 
     m_Assembler.mov(TempReg, AddressReg);
@@ -10040,9 +10044,7 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
         m_Assembler.CallThis((uint32_t)(&m_MMU), AddressOf(&CMipsMemoryVM::LW_VAddr32), "CMipsMemoryVM::LW_VAddr32", 12);
         m_Assembler.test(asmjit::x86::al, asmjit::x86::al);
         m_RegWorkingSet.AfterCallDirect();
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() + g_System->CountPerOp());
-        CompileExit(m_CompilePC, (uint32_t)-1, m_RegWorkingSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() - g_System->CountPerOp());
+        CompileExit(m_CompilePC, (uint32_t)-1, ExitRegSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
         m_Assembler.MoveConstToX86reg(TempReg, (uint32_t)&m_TempValue32);
         m_Assembler.sub(TempReg, AddressReg);
     }
@@ -10054,9 +10056,7 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
         m_Assembler.CallThis((uint32_t)(&m_MMU), AddressOf(&CMipsMemoryVM::LH_VAddr32), "CMipsMemoryVM::LH_VAddr32", 12);
         m_Assembler.test(asmjit::x86::al, asmjit::x86::al);
         m_RegWorkingSet.AfterCallDirect();
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() + g_System->CountPerOp());
-        CompileExit(m_CompilePC, (uint32_t)-1, m_RegWorkingSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() - g_System->CountPerOp());
+        CompileExit(m_CompilePC, (uint32_t)-1, ExitRegSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
         m_Assembler.MoveConstToX86reg(TempReg, (uint32_t)&m_TempValue32);
         m_Assembler.sub(TempReg, AddressReg);
         m_Assembler.xor_(AddressReg, 2);
@@ -10069,9 +10069,7 @@ void CX86RecompilerOps::CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, con
         m_Assembler.CallThis((uint32_t)&m_MMU, AddressOf(&CMipsMemoryVM::LB_VAddr32), "CMipsMemoryVM::LB_VAddr32", 12);
         m_Assembler.test(asmjit::x86::al, asmjit::x86::al);
         m_RegWorkingSet.AfterCallDirect();
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() + g_System->CountPerOp());
-        CompileExit(m_CompilePC, (uint32_t)-1, m_RegWorkingSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
-        m_RegWorkingSet.SetBlockCycleCount(m_RegWorkingSet.GetBlockCycleCount() - g_System->CountPerOp());
+        CompileExit(m_CompilePC, (uint32_t)-1, ExitRegSet, ExitReason_Exception, false, &CX86Ops::JeLabel);
         m_Assembler.MoveConstToX86reg(TempReg, (uint32_t)&m_TempValue32);
         m_Assembler.sub(TempReg, AddressReg);
         m_Assembler.xor_(AddressReg, 3);
