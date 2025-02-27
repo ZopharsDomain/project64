@@ -94,7 +94,7 @@ void R4300iOp::ExecuteOps(uint32_t Cycles)
     int32_t & NextTimer = *g_NextTimer;
     bool CheckTimer = false;
     bool updateInstructionMemory = true;
-    m_InstructionRegion = -1;
+    m_InstructionRegion = (uint64_t)-1;
 
     while (!Done && Cycles > 0)
     {

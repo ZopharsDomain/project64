@@ -63,6 +63,11 @@ bool CRecompMemory::CheckRecompMem(uint32_t BlockSize)
     if (m_RecompSize == MaxCompileBufferSize)
     {
         g_Recompiler->ResetRecompCode(true);
+        Size = (uint32_t)((uint8_t *)m_RecompPos - (uint8_t *)m_RecompCode);
+        if ((Size + BlockSize) < m_RecompSize)
+        {
+            return true;
+        }
         return false;
     }
     if (BlockSize > IncreaseCompileBufferSize)

@@ -894,6 +894,11 @@ bool CCodeBlock::Compile()
 
 uint32_t CCodeBlock::Finilize(CRecompMemory & RecompMem)
 {
+    size_t codeSize = m_CodeHolder.codeSize();
+    if (!RecompMem.CheckRecompMem(codeSize))
+    {
+        return 0;
+    }
     m_CompiledLocation = RecompMem.RecompPos();
     m_CodeHolder.relocateToBase((uint64_t)m_CompiledLocation);
     if (CDebugSettings::bRecordRecompilerAsm())
@@ -913,11 +918,6 @@ uint32_t CCodeBlock::Finilize(CRecompMemory & RecompMem)
         }
         Log("====== Recompiled code ======");
         m_CodeLog += CodeLog;
-    }
-    size_t codeSize = m_CodeHolder.codeSize();
-    if (!RecompMem.CheckRecompMem(codeSize))
-    {
-        return 0;
     }
     m_CodeHolder.copyFlattenedData(m_CompiledLocation, codeSize, asmjit::CopySectionFlags::kPadSectionBuffer);
     m_Recompiler.RecompPos() += codeSize;
