@@ -1,6 +1,8 @@
+#if defined(__i386__) || defined(_M_IX86)
+
 #include "RspRecompilerCPU.h"
 #include "RspProfiling.h"
-#include "RspRecompilerOps.h"
+#include "RspRecompilerOps-x86.h"
 #include "X86.h"
 #include <Common/StdString.h>
 #include <Project64-rsp-core/RSPInfo.h>
@@ -1248,3 +1250,5 @@ void CRSPRecompiler::SetJumpTable(uint32_t End)
     Table = NoOfMaps;
     NoOfMaps += 1;
 }
+
+#endif

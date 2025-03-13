@@ -9,10 +9,8 @@ bool CRSPSettings::m_RomOpen = false;
 
 #if defined(_M_IX86) && defined(_MSC_VER)
 RSPCpuMethod CRSPSettings::m_CPUMethod = RSPCpuMethod::Recompiler;
-bool HleAlistTask = false;
 #else
 RSPCpuMethod CRSPSettings::m_CPUMethod = RSPCpuMethod::HighLevelEmulation;
-bool HleAlistTask = true;
 #endif
 
 uint16_t Set_AudioHle = 0, Set_GraphicsHle = 0, Set_MultiThreaded = 0, Set_AllocatedRdramSize = 0, Set_DirectoryLog = 0;
@@ -41,10 +39,10 @@ void CRSPSettings::InitializeRspSetting(void)
     RegisterSetting(Set_Profiling, Data_DWORD_General, "Profiling", NULL, Profiling, NULL);
     RegisterSetting(Set_IndvidualBlock, Data_DWORD_General, "Individual Block", NULL, IndvidualBlock, NULL);
     RegisterSetting(Set_ShowErrors, Data_DWORD_General, "Show Errors", NULL, ShowErrors, NULL);
-    RegisterSetting(Set_HleAlistTask, Data_DWORD_General, "Hle Alist Task", NULL, HleAlistTask, NULL);
     RegisterSetting(Set_SyncCPU, Data_DWORD_General, "Sync CPU", NULL, SyncCPU, NULL);
 
     // Compiler settings
+#if defined(__i386__) || defined(_M_IX86)
     RegisterSetting(Set_CheckDest, Data_DWORD_General, "Check Destination Vector", NULL, Compiler.bDest, NULL);
     RegisterSetting(Set_Accum, Data_DWORD_General, "Check Destination Accumulator", NULL, Compiler.bAccum, NULL);
     RegisterSetting(Set_Mmx, Data_DWORD_General, "Use MMX", NULL, Compiler.mmx, NULL);
@@ -55,6 +53,7 @@ void CRSPSettings::InitializeRspSetting(void)
     RegisterSetting(Set_GPRConstants, Data_DWORD_General, "Detect GPR Constants", NULL, Compiler.bGPRConstants, NULL);
     RegisterSetting(Set_Flags, Data_DWORD_General, "Check Flag Usage", NULL, Compiler.bFlags, NULL);
     RegisterSetting(Set_AlignVector, Data_DWORD_General, "Assume Vector loads align", NULL, Compiler.bAlignVector, NULL);
+#endif
 
     RegisterSetting(Set_JumpTableSize, Data_DWORD_Game, "JumpTableSize", NULL, 0x1000, NULL);
     RegisterSetting(Set_Mfc0Count, Data_DWORD_Game, "Mfc0Count", NULL, 0x0, NULL);

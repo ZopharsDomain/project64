@@ -1,6 +1,8 @@
+#if defined(__i386__) || defined(_M_IX86)
+
 #include "RspRecompilerCPU.h"
 #include "X86.h"
-#include <Project64-rsp-core/Recompiler/RspRecompilerOps.h>
+#include <Project64-rsp-core/Recompiler/RspRecompilerOps-x86.h>
 #include <Project64-rsp-core/cpu/RSPCpu.h>
 #include <Project64-rsp-core/cpu/RSPInstruction.h>
 #include <Project64-rsp-core/cpu/RSPRegisters.h>
@@ -967,3 +969,5 @@ bool CRSPRecompilerOps::RSP_DoSections(void)
     }
     return false;
 }
+
+#endif

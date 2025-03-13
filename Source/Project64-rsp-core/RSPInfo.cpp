@@ -18,7 +18,9 @@
 RSP_INFO RSPInfo;
 uint32_t RdramSize = 0;
 
+#if defined(__i386__) || defined(_M_IX86)
 void ClearAllx86Code(void);
+#endif
 
 void DetectCpuSpecs(void)
 {
@@ -62,6 +64,7 @@ void DetectCpuSpecs(void)
     AMD_Features = Intel_Features = 0;
 #endif
 
+#if defined(__i386__) || defined(_M_IX86)
     if (Intel_Features & 0x02000000)
     {
         Compiler.mmx2 = true;
@@ -75,6 +78,7 @@ void DetectCpuSpecs(void)
     {
         Compiler.mmx2 = true;
     }
+#endif
     if (Intel_Features & 0x00008000)
     {
         ConditionalMove = true;
@@ -94,6 +98,7 @@ void RspPluginLoaded(void)
     IndvidualBlock = false;
     ShowErrors = false;
 
+#if defined(__i386__) || defined(_M_IX86)
     memset(&Compiler, 0, sizeof(Compiler));
 
     Compiler.bDest = true;
@@ -103,6 +108,7 @@ void RspPluginLoaded(void)
     Compiler.bSections = false;
     Compiler.bAccum = true;
     Compiler.bGPRConstants = true;
+#endif
     DetectCpuSpecs();
 
     CRSPSettings::InitializeRspSetting();
@@ -126,9 +132,13 @@ void InitilizeRSP(RSP_INFO & Rsp_Info)
 void RspRomOpened(void)
 {
     CRSPSettings::SetRomOpen(true);
+#if defined(__i386__) || defined(_M_IX86)
     ClearAllx86Code();
+#endif
 
+#if defined(__i386__) || defined(_M_IX86)
     JumpTableSize = GetSetting(Set_JumpTableSize);
+#endif
     Mfc0Count = GetSetting(Set_Mfc0Count);
     SemaphoreExit = GetSetting(Set_SemaphoreExit);
     RdramSize = Set_AllocatedRdramSize != 0 ? GetSystemSetting(Set_AllocatedRdramSize) : 0;
@@ -147,7 +157,9 @@ void RspRomClosed(void)
         GenerateTimerResults();
     }
     RSPSystem.RomClosed();
+#if defined(__i386__) || defined(_M_IX86)
     ClearAllx86Code();
+#endif
     RDPLog.StopLog();
     StopCPULog();
 

@@ -13,7 +13,9 @@ CRSPSystem::CRSPSystem() :
     CHleTask(*this),
     m_SyncSystem(nullptr),
     m_BaseSystem(nullptr),
+#if defined(__i386__) || defined(_M_IX86)
     m_Recompiler(*this),
+#endif
     m_RSPRegisterHandler(nullptr),
     m_Op(*this),
     m_NextInstruction(RSPPIPELINE_NORMAL),
@@ -137,10 +139,12 @@ void CRSPSystem::RomClosed(void)
 {
 }
 
+#if defined(__i386__) || defined(_M_IX86)
 void CRSPSystem::RunRecompiler(void)
 {
     m_Recompiler.RunCPU();
 }
+#endif
 
 void CRSPSystem::ExecuteOps(uint32_t Cycles, uint32_t TargetPC)
 {

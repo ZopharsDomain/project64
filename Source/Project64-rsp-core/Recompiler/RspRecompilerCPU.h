@@ -1,6 +1,8 @@
+#if defined(__i386__) || defined(_M_IX86)
+
 #pragma once
 
-#include <Project64-rsp-core/Recompiler/RspRecompilerOps.h>
+#include <Project64-rsp-core/Recompiler/RspRecompilerOps-x86.h>
 #include <Project64-rsp-core/Settings/RspSettings.h>
 #include <Project64-rsp-core/cpu/RSPOpcode.h>
 #include <Project64-rsp-core/cpu/RspPipelineStage.h>
@@ -116,3 +118,5 @@ extern RSP_COMPILER Compiler;
 #define IsMmxEnabled (Compiler.mmx)
 #define IsMmx2Enabled (Compiler.mmx2)
 #define IsSseEnabled (Compiler.sse)
+
+#endif

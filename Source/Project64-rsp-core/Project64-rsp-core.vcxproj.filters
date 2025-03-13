@@ -69,9 +69,6 @@
     <ClCompile Include="Recompiler\RspRecompilerCPU.cpp">
       <Filter>Source Files\Recompiler</Filter>
     </ClCompile>
-    <ClCompile Include="Recompiler\RspRecompilerOps.cpp">
-      <Filter>Source Files\Recompiler</Filter>
-    </ClCompile>
     <ClCompile Include="Recompiler\RspRecompilerSections.cpp">
       <Filter>Source Files\Recompiler</Filter>
     </ClCompile>
@@ -141,6 +138,9 @@
     <ClCompile Include="Hle\HleTask.cpp">
       <Filter>Source Files\hle</Filter>
     </ClCompile>
+    <ClCompile Include="Recompiler\RspRecompilerOps-x86.cpp">
+      <Filter>Source Files\Recompiler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cpu\RSPInstruction.h">
@@ -174,9 +174,6 @@
       <Filter>Header Files\Settings</Filter>
     </ClInclude>
     <ClInclude Include="Recompiler\RspRecompilerCPU.h">
-      <Filter>Header Files\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="Recompiler\RspRecompilerOps.h">
       <Filter>Header Files\Recompiler</Filter>
     </ClInclude>
     <ClInclude Include="cpu\RspMemory.h">
@@ -226,6 +223,9 @@
     </ClInclude>
     <ClInclude Include="Hle\HleTask.h">
       <Filter>Header Files\hle</Filter>
+    </ClInclude>
+    <ClInclude Include="Recompiler\RspRecompilerOps-x86.h">
+      <Filter>Header Files\Recompiler</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,10 +1,12 @@
+#if defined(__i386__) || defined(_M_IX86)
+
 #include "Project64-rsp-core/Recompiler/RspRecompilerCPU.h"
 #include "RspProfiling.h"
 #include "RspRecompilerCPU.h"
 #include "X86.h"
 #include <Common/StdString.h>
 #include <Project64-rsp-core/RSPInfo.h>
-#include <Project64-rsp-core/Recompiler/RspRecompilerOps.h>
+#include <Project64-rsp-core/Recompiler/RspRecompilerOps-x86.h>
 #include <Project64-rsp-core/cpu/RSPCpu.h>
 #include <Project64-rsp-core/cpu/RSPInstruction.h>
 #include <Project64-rsp-core/cpu/RSPInterpreterOps.h>
@@ -17,7 +19,7 @@
 #pragma warning(disable : 4152) // Non-standard extension, function/data pointer conversion in expression
 
 extern bool AudioHle, GraphicsHle;
-UWORD32 Recp, RecpResult, SQroot, SQrootResult;
+extern UWORD32 Recp, RecpResult, SQroot, SQrootResult;
 uint32_t ESP_RegSave = 0, EBP_RegSave = 0;
 uint32_t BranchCompare = 0;
 
@@ -168,10 +170,12 @@ void CRSPRecompilerOps::J(void)
     {
         CPU_Message("  %X %s", m_CompilePC, RSPInstruction(m_CompilePC, m_OpCode.Value).NameAndParam().c_str());
         m_NextInstruction = RSPPIPELINE_DO_DELAY_SLOT;
+#if defined(__amd64__) || defined(_M_X64)
         if (CRSPSettings::CPUMethod() == RSPCpuMethod::RecompilerTasks && m_OpCode.Value == EndHleTaskOp::J_0x1118)
         {
             m_NextInstruction = RSPPIPELINE_DO_DELAY_SLOT_TASK_EXIT;
         }
+#endif
     }
     else if (m_NextInstruction == RSPPIPELINE_DELAY_SLOT_DONE)
     {
@@ -8290,3 +8294,5 @@ void CRSPRecompilerOps::UnknownOpcode(void)
     Call_Direct(AddressOf(&RSPOp::UnknownOpcode), "&RSPOp::UnknownOpcode");
     Ret();
 }
+
+#endif

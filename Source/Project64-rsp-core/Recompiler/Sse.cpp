@@ -1,3 +1,5 @@
+#if defined(__i386__) || defined(_M_IX86)
+
 #include "X86.h"
 #include <Project64-rsp-core/RSPInfo.h>
 #include <Project64-rsp-core/cpu/RSPRegisters.h>
@@ -355,3 +357,5 @@ void SseShuffleReg(int Dest, int Source, uint8_t Immed)
     PUTDST8(RecompPos, 0xC0 | x86Command);
     PUTDST8(RecompPos, Immed);
 }
+
+#endif

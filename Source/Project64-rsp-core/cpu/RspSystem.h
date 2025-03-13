@@ -32,7 +32,9 @@ public:
     void Reset(RSP_INFO & Info);
     void RomClosed(void);
 
+#if defined(__i386__) || defined(_M_IX86)
     void RunRecompiler(void);
+#endif
     void ExecuteOps(uint32_t Cycles, uint32_t TargetPC);
     void SetupSyncCPU();
     bool IsSyncSystem(void);
@@ -51,7 +53,9 @@ private:
 
     CRSPSystem * m_SyncSystem;
     CRSPSystem * m_BaseSystem;
+#if defined(__i386__) || defined(_M_IX86)
     CRSPRecompiler m_Recompiler;
+#endif
     RSPRegisterHandlerPlugin * m_RSPRegisterHandler;
     CRSPRegisters m_Reg;
     RSPOp m_Op;

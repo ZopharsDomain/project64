@@ -36,7 +36,9 @@
 
 void ProcessMenuItem(int32_t ID);
 #ifdef _WIN32
+#if defined(__i386__) || defined(_M_IX86)
 BOOL CALLBACK CompilerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+#endif
 HMENU hRSPMenu = NULL;
 #endif
 
@@ -177,20 +179,31 @@ void FixMenuState(void)
     EnableMenuItem(hRSPMenu, ID_CPUMETHOD_INTERPT, MF_BYCOMMAND | (!CRSPSettings::RomOpen() ? MF_ENABLED : (MF_GRAYED | MF_DISABLED)));
     EnableMenuItem(hRSPMenu, ID_CPUMETHOD_HLE, MF_BYCOMMAND | (!CRSPSettings::RomOpen() ? MF_ENABLED : (MF_GRAYED | MF_DISABLED)));
 
+#if defined(__i386__) || defined(_M_IX86)
     CheckMenuItem(hRSPMenu, ID_CPUMETHOD_RECOMPILER, MF_BYCOMMAND | ((RSPCpuMethod)GetSetting(Set_CPUCore) == RSPCpuMethod::Recompiler ? MFS_CHECKED : MF_UNCHECKED));
+#endif
     CheckMenuItem(hRSPMenu, ID_CPUMETHOD_INTERPT, MF_BYCOMMAND | ((RSPCpuMethod)GetSetting(Set_CPUCore) == RSPCpuMethod::Interpreter ? MFS_CHECKED : MF_UNCHECKED));
+#if defined(__amd64__) || defined(_M_X64)
     CheckMenuItem(hRSPMenu, ID_CPUMETHOD_RECOMPILER_TASKS, MF_BYCOMMAND | ((RSPCpuMethod)GetSetting(Set_CPUCore) == RSPCpuMethod::RecompilerTasks ? MFS_CHECKED : MF_UNCHECKED));
+#endif
     CheckMenuItem(hRSPMenu, ID_CPUMETHOD_HLE, MF_BYCOMMAND | ((RSPCpuMethod)GetSetting(Set_CPUCore) == RSPCpuMethod::HighLevelEmulation ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_BREAKONSTARTOFTASK, MF_BYCOMMAND | (BreakOnStart ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_LOGRDPCOMMANDS, MF_BYCOMMAND | (LogRDP ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_SETTINGS_SYNCCPU, MF_BYCOMMAND | (SyncCPU ? MFS_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(hRSPMenu, ID_SETTINGS_HLEALISTTASK, MF_BYCOMMAND | (HleAlistTask ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_SETTINGS_LOGX86CODE, MF_BYCOMMAND | (LogX86Code ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_SETTINGS_MULTITHREADED, MF_BYCOMMAND | (MultiThreadedDefault ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_PROFILING_ON, MF_BYCOMMAND | (Profiling ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_PROFILING_OFF, MF_BYCOMMAND | (Profiling ? MFS_UNCHECKED : MF_CHECKED));
     CheckMenuItem(hRSPMenu, ID_PROFILING_LOGINDIVIDUALBLOCKS, MF_BYCOMMAND | (IndvidualBlock ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_SHOWCOMPILERERRORS, MF_BYCOMMAND | (ShowErrors ? MFS_CHECKED : MF_UNCHECKED));
+
+#if defined(__i386__) || defined(_M_IX86)
+    DeleteMenu(hRSPMenu, ID_CPUMETHOD_RECOMPILER_TASKS, MF_BYCOMMAND);
+#endif
+#if defined(__amd64__) || defined(_M_X64)
+    DeleteMenu(hRSPMenu, ID_CPUMETHOD_RECOMPILER, MF_BYCOMMAND);
+    DeleteMenu(hRSPMenu, ID_COMPILER, MF_BYCOMMAND);
+#endif
 }
 #endif
 
@@ -334,9 +347,11 @@ void ProcessMenuItem(int32_t ID)
         break;
     }
     break;
+#if defined(__i386__) || defined(_M_IX86)
     case ID_COMPILER:
         DialogBoxA((HINSTANCE)hinstDLL, "RSPCOMPILER", HWND_DESKTOP, (DLGPROC)CompilerDlgProc);
         break;
+#endif
     case ID_BREAKONSTARTOFTASK:
     {
         bool Checked = (GetMenuState(hRSPMenu, ID_BREAKONSTARTOFTASK, MF_BYCOMMAND) & MFS_CHECKED) != 0;
@@ -393,13 +408,6 @@ void ProcessMenuItem(int32_t ID)
         SetSetting(Set_SyncCPU, !Checked);
         break;
     }
-    case ID_SETTINGS_HLEALISTTASK:
-    {
-        bool Checked = (GetMenuState(hRSPMenu, ID_SETTINGS_HLEALISTTASK, MF_BYCOMMAND) & MFS_CHECKED) != 0;
-        CheckMenuItem(hRSPMenu, ID_SETTINGS_HLEALISTTASK, MF_BYCOMMAND | (Checked ? MFS_UNCHECKED : MFS_CHECKED));
-        SetSetting(Set_HleAlistTask, !Checked);
-        break;
-    }
     case ID_SETTINGS_MULTITHREADED:
     {
         bool Checked = (GetMenuState(hRSPMenu, ID_SETTINGS_MULTITHREADED, MF_BYCOMMAND) & MFS_CHECKED) != 0;
@@ -411,18 +419,22 @@ void ProcessMenuItem(int32_t ID)
         }
         break;
     }
+#if defined(__i386__) || defined(_M_IX86)
     case ID_CPUMETHOD_RECOMPILER:
         SetSetting(Set_CPUCore, (int)RSPCpuMethod::Recompiler);
         FixMenuState();
         break;
+#endif
     case ID_CPUMETHOD_INTERPT:
         SetSetting(Set_CPUCore, (int)RSPCpuMethod::Interpreter);
         FixMenuState();
         break;
+#if defined(__amd64__) || defined(_M_X64)
     case ID_CPUMETHOD_RECOMPILER_TASKS:
         SetSetting(Set_CPUCore, (int)RSPCpuMethod::RecompilerTasks);
         FixMenuState();
         break;
+#endif
     case ID_CPUMETHOD_HLE:
         SetSetting(Set_CPUCore, (int)RSPCpuMethod::HighLevelEmulation);
         FixMenuState();
@@ -466,6 +478,7 @@ static bool GetBooleanCheck(HWND hDlg, DWORD DialogID)
     return (IsDlgButtonChecked(hDlg, DialogID) == BST_CHECKED) ? true : false;
 }
 
+#if defined(__i386__) || defined(_M_IX86)
 BOOL CALLBACK CompilerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM /*lParam*/)
 {
     char Buffer[256];
@@ -543,6 +556,7 @@ BOOL CALLBACK CompilerDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM /*lPar
     }
     return true;
 }
+#endif
 
 BOOL CALLBACK ConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM /*lParam*/)
 {
@@ -607,9 +621,9 @@ EXPORT void EnableDebugging(int Enabled)
         Profiling = GetSetting(Set_Profiling) != 0;
         IndvidualBlock = GetSetting(Set_IndvidualBlock) != 0;
         ShowErrors = GetSetting(Set_ShowErrors) != 0;
-        HleAlistTask = GetSetting(Set_HleAlistTask) != 0;
         SyncCPU = GetSetting(Set_SyncCPU) != 0;
 
+#if defined(__i386__) || defined(_M_IX86)
         Compiler.bDest = GetSetting(Set_CheckDest) != 0;
         Compiler.bAccum = GetSetting(Set_Accum) != 0;
         Compiler.mmx = GetSetting(Set_Mmx) != 0;
@@ -620,6 +634,7 @@ EXPORT void EnableDebugging(int Enabled)
         Compiler.bGPRConstants = GetSetting(Set_GPRConstants) != 0;
         Compiler.bFlags = GetSetting(Set_Flags) != 0;
         Compiler.bAlignVector = GetSetting(Set_AlignVector) != 0;
+#endif
     }
 #ifdef _WIN32
     FixMenuState();

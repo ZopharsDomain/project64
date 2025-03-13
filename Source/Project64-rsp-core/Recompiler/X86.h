@@ -1,4 +1,5 @@
 #pragma once
+#if defined(__i386__) || defined(_M_IX86)
 #include <stdint.h>
 
 enum x86RegValues
@@ -271,3 +272,5 @@ void x86_SetBranch8b(void * Jumpuint8_t, void * Destination);
 
 void * GetAddressOf_(int32_t value, ...);
 #define AddressOf(Addr) GetAddressOf_(5, (Addr))
+
+#endif

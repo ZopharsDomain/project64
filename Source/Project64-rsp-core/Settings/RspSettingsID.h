@@ -9,7 +9,6 @@ enum
     Set_Profiling,
     Set_IndvidualBlock,
     Set_ShowErrors,
-    Set_HleAlistTask,
     Set_SyncCPU,
 
     // Compiler settings

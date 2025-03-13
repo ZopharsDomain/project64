@@ -1,3 +1,5 @@
+#if defined(__i386__) || defined(_M_IX86)
+
 #include "X86.h"
 #include <Project64-rsp-core/cpu/RSPRegisters.h>
 #include <Project64-rsp-core/cpu/RspLog.h>
@@ -814,3 +816,5 @@ void MmxCompareGreaterWordRegToReg(int Dest, int Source)
     PUTDST16(RecompPos, 0x650f);
     PUTDST8(RecompPos, 0xC0 | x86Command);
 }
+
+#endif

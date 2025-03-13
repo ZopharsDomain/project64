@@ -41,8 +41,12 @@ void RSPRegisterHandlerPlugin::SetHalt(void)
 
 void RSPRegisterHandlerPlugin::DmaReadDone(uint32_t End)
 {
+#if defined(__i386__) || defined(_M_IX86)
     if (CPUMethod() == RSPCpuMethod::Recompiler && (*RSPInfo.SP_MEM_ADDR_REG & 0x1000) != 0)
     {
         m_System.m_Recompiler.SetJumpTable(End);
     }
+#else
+    End = End;
+#endif
 }

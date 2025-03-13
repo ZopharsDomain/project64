@@ -16,10 +16,10 @@ uint32_t RSP_Running;
 CriticalSection g_CPUCriticalSection;
 uint32_t Mfc0Count, SemaphoreExit = 0;
 
+UWORD32 Recp, RecpResult, SQroot, SQrootResult;
+
 void Build_RSP(void)
 {
-    extern UWORD32 Recp, RecpResult, SQroot, SQrootResult;
-
     Recp.UW = 0;
     RecpResult.UW = 0;
     SQroot.UW = 0;
@@ -95,7 +95,7 @@ be greater than the number of cycles that the RSP should have performed.
 
 uint32_t DoRspCycles(uint32_t Cycles)
 {
-    if (RSPSystem.IsHleTask() && RSPSystem.ProcessHleTask())
+    if (CRSPSettings::CPUMethod() == RSPCpuMethod::HighLevelEmulation && RSPSystem.ProcessHleTask())
     {
         return Cycles;
     }
@@ -105,17 +105,21 @@ uint32_t DoRspCycles(uint32_t Cycles)
         g_RSPDebugger->RspCyclesStart();
     }
     CGuard Guard(g_CPUCriticalSection);
-
-    switch (CRSPSettings::CPUMethod())
+#if defined(__i386__) || defined(_M_IX86)
+    if (CRSPSettings::CPUMethod() == RSPCpuMethod::Recompiler)
     {
-    case RSPCpuMethod::Recompiler:
         RSPSystem.RunRecompiler();
-        break;
-    case RSPCpuMethod::Interpreter:
-    case RSPCpuMethod::RecompilerTasks:
-    case RSPCpuMethod::HighLevelEmulation:
+    }
+#endif
+#if defined(__amd64__) || defined(_M_X64)
+    if (CRSPSettings::CPUMethod() == RSPCpuMethod::RecompilerTasks)
+    {
         RSPSystem.ExecuteOps((uint32_t)-1, (uint32_t)-1);
-        break;
+    }
+#endif
+    else
+    {
+        RSPSystem.ExecuteOps((uint32_t)-1, (uint32_t)-1);
     }
     if (g_RSPDebugger != nullptr)
     {

@@ -30,8 +30,10 @@ void RSPDebuggerUI::StartingCPU(void)
 
 void RSPDebuggerUI::RspCyclesStart(void)
 {
+#if defined(__i386__) || defined(_M_IX86)
     uint32_t TaskType = *(uint32_t *)(RSPInfo.DMEM + 0xFC0);
     Compiler.bAudioUcode = (TaskType == 2) ? true : false;
+#endif
     if (Profiling && !IndvidualBlock)
     {
         StartTimer((uint32_t)Timer_RSP_Running);

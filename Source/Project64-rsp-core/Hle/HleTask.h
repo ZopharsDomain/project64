@@ -55,9 +55,7 @@ private:
     CHleTask(const CHleTask & copy);
     CHleTask & operator=(const CHleTask & rhs);
 
-    void SetupCommandList(TASK_INFO & TaskInfo);
     void ExecuteTask_1a13a51a(TASK_INFO & TaskInfo);
-    void SetupTask(TASK_INFO & TaskInfo);
 
     void (*&CheckInterrupts)(void);
     void (*&ProcessDList)(void);

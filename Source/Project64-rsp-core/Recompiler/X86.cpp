@@ -1,3 +1,5 @@
+#if defined(__i386__) || defined(_M_IX86)
+
 #include <stdio.h>
 
 #include "X86.h"
@@ -3366,3 +3368,5 @@ void * GetAddressOf_(int value, ...)
 
     return Address;
 }
+
+#endif

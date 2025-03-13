@@ -1,3 +1,5 @@
+#if defined(__i386__) || defined(_M_IX86)
+
 #include "RspRecompilerCPU.h"
 #include <Common/StdString.h>
 #include <Project64-rsp-core/RSPInfo.h>
@@ -1072,3 +1074,5 @@ bool CompareInstructions(uint32_t PC, RSPOpcode * Top, RSPOpcode * Bottom)
 
     return false;
 }
+
+#endif
