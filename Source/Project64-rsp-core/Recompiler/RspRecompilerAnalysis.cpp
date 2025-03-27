@@ -1,6 +1,6 @@
 #if defined(__i386__) || defined(_M_IX86)
 
-#include "RspRecompilerCPU.h"
+#include "RspRecompilerCPU-x86.h"
 #include <Common/StdString.h>
 #include <Project64-rsp-core/RSPInfo.h>
 #include <Project64-rsp-core/Settings/RspSettings.h>

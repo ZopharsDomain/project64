@@ -1,8 +1,7 @@
 #if defined(__i386__) || defined(_M_IX86)
 
-#include "Project64-rsp-core/Recompiler/RspRecompilerCPU.h"
 #include "RspProfiling.h"
-#include "RspRecompilerCPU.h"
+#include "RspRecompilerCPU-x86.h"
 #include "X86.h"
 #include <Common/StdString.h>
 #include <Project64-rsp-core/RSPInfo.h>

@@ -1,6 +1,6 @@
 #include "RSPInfo.h"
 #include <Project64-rsp-core/Recompiler/RspProfiling.h>
-#include <Project64-rsp-core/Recompiler/RspRecompilerCPU.h>
+#include <Project64-rsp-core/Recompiler/RspRecompilerCPU-x86.h>
 #include <Project64-rsp-core/Settings/RspSettings.h>
 #include <Project64-rsp-core/Settings/RspSettingsID.h>
 #include <Project64-rsp-core/cpu/RSPCpu.h>

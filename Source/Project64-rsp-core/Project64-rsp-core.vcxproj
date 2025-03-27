@@ -66,7 +66,7 @@
     <ClCompile Include="Recompiler\Mmx.cpp" />
     <ClCompile Include="Recompiler\RspProfiling.cpp" />
     <ClCompile Include="Recompiler\RspRecompilerAnalysis.cpp" />
-    <ClCompile Include="Recompiler\RspRecompilerCPU.cpp" />
+    <ClCompile Include="Recompiler\RspRecompilerCPU-x86.cpp" />
     <ClCompile Include="Recompiler\RspRecompilerOps-x86.cpp" />
     <ClCompile Include="Recompiler\RspRecompilerSections.cpp" />
     <ClCompile Include="Recompiler\Sse.cpp" />
@@ -97,7 +97,7 @@
     <ClInclude Include="Hle\mem.h" />
     <ClInclude Include="Hle\ucodes.h" />
     <ClInclude Include="Recompiler\RspProfiling.h" />
-    <ClInclude Include="Recompiler\RspRecompilerCPU.h" />
+    <ClInclude Include="Recompiler\RspRecompilerCPU-x86.h" />
     <ClInclude Include="Recompiler\RspRecompilerOps-x86.h" />
     <ClInclude Include="Recompiler\X86.h" />
     <ClInclude Include="RSPDebugger.h" />

@@ -1,6 +1,6 @@
 #if defined(__i386__) || defined(_M_IX86)
 
-#include "RspRecompilerCPU.h"
+#include "RspRecompilerCPU-x86.h"
 #include "RspProfiling.h"
 #include "RspRecompilerOps-x86.h"
 #include "X86.h"

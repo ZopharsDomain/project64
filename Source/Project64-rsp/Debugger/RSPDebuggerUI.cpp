@@ -1,7 +1,7 @@
 #include "RSPDebuggerUI.h"
 #include <Project64-rsp-core/RSPInfo.h>
 #include <Project64-rsp-core/Recompiler/RspProfiling.h>
-#include <Project64-rsp-core/Recompiler/RspRecompilerCPU.h>
+#include <Project64-rsp-core/Recompiler/RspRecompilerCPU-x86.h>
 #include <Project64-rsp-core/Settings/RspSettings.h>
 #include <Project64-rsp-core/cpu/RSPCpu.h>
 #include <Project64-rsp-core/cpu/RSPInstruction.h>

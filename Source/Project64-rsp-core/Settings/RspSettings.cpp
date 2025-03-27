@@ -1,6 +1,6 @@
 #include "RspSettings.h"
 #include "RspSettingsID.h"
-#include <Project64-rsp-core/Recompiler/RspRecompilerCPU.h>
+#include <Project64-rsp-core/Recompiler/RspRecompilerCPU-x86.h>
 #include <Project64-rsp-core/cpu/RSPCpu.h>
 #include <Settings/Settings.h>
 

@@ -1,4 +1,6 @@
 #pragma once
+#if defined(__i386__) || defined(_M_IX86)
+
 #include <Project64-rsp-core/cpu/RSPInterpreterOps.h>
 
 class CRSPSystem;
@@ -233,3 +235,5 @@ private:
 };
 
 typedef void (CRSPRecompilerOps::*p_Recompfunc)(void);
+
+#endif
