@@ -7,27 +7,30 @@ class RSPInstruction
 {
 public:
     RSPInstruction(uint32_t Address, uint32_t Instruction);
+    RSPInstruction & operator=(const RSPInstruction &);
 
-    const char * Name();
-    const char * Param();
-    std::string NameAndParam();
+    uint32_t Address() const;
+    bool IsBranch() const;
+    const char * Name() const;
+    const char * Param() const;
+    std::string NameAndParam() const;
+    uint32_t Value() const;
 
 private:
     RSPInstruction(void);
     RSPInstruction(const RSPInstruction &);
-    RSPInstruction & operator=(const RSPInstruction &);
 
-    void DecodeName(void);
-    void DecodeSpecialName(void);
-    void DecodeRegImmName(void);
-    void DecodeCop0Name(void);
-    void DecodeCop2Name(void);
-    void DecodeLSC2Name(const char LoadStoreIdent);
+    void DecodeName(void) const;
+    void DecodeSpecialName(void) const;
+    void DecodeRegImmName(void) const;
+    void DecodeCop0Name(void) const;
+    void DecodeCop2Name(void) const;
+    void DecodeLSC2Name(const char LoadStoreIdent) const;
 
     static const char * ElementSpecifier(uint32_t Element);
 
     uint32_t m_Address;
     RSPOpcode m_Instruction;
-    char m_Name[40];
-    char m_Param[200];
+    mutable char m_Name[40];
+    mutable char m_Param[200];
 };

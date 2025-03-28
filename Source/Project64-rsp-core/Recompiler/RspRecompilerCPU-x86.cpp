@@ -435,11 +435,10 @@ void CRSPRecompiler::ReOrderInstructions(uint32_t StartPC, uint32_t EndPC)
 {
     uint32_t InstructionCount = EndPC - StartPC;
     uint32_t Count, ReorderedOps, CurrentPC;
-    RSPOpcode PreviousOp, CurrentOp, RspOp;
+    RSPInstruction PreviousOp(StartPC, *(uint32_t *)(m_IMEM + (StartPC & 0xFFC)));
+    RSPOpcode CurrentOp, RspOp;
 
-    PreviousOp.Value = *(uint32_t *)(m_IMEM + (StartPC & 0xFFC));
-
-    if (IsOpcodeBranch(StartPC, PreviousOp))
+    if (PreviousOp.IsBranch())
     {
         // The sub block ends here anyway
         return;
@@ -472,7 +471,7 @@ void CRSPRecompiler::ReOrderInstructions(uint32_t StartPC, uint32_t EndPC)
     for (Count = 0; Count < InstructionCount; Count += 4)
     {
         CurrentPC = StartPC;
-        PreviousOp.Value = *(uint32_t *)(m_IMEM + (CurrentPC & 0xFFC));
+        PreviousOp = RSPInstruction(CurrentPC, *(uint32_t *)(m_IMEM + (CurrentPC & 0xFFC)));
         ReorderedOps = 0;
 
         for (;;)
@@ -484,11 +483,11 @@ void CRSPRecompiler::ReOrderInstructions(uint32_t StartPC, uint32_t EndPC)
             }
             CurrentOp.Value = *(uint32_t *)(m_IMEM + CurrentPC);
 
-            if (CompareInstructions(CurrentPC, &PreviousOp, &CurrentOp))
+            if (CompareInstructions(CurrentPC, PreviousOp, &CurrentOp))
             {
                 // Move current opcode up
                 *(uint32_t *)(m_IMEM + CurrentPC - 4) = CurrentOp.Value;
-                *(uint32_t *)(m_IMEM + CurrentPC) = PreviousOp.Value;
+                *(uint32_t *)(m_IMEM + CurrentPC) = PreviousOp.Value();
 
                 ReorderedOps++;
 
@@ -496,7 +495,7 @@ void CRSPRecompiler::ReOrderInstructions(uint32_t StartPC, uint32_t EndPC)
                 CPU_Message("Swapped %X and %X", CurrentPC - 4, CurrentPC);
 #endif
             }
-            PreviousOp.Value = *(uint32_t *)(m_IMEM + (CurrentPC & 0xFFC));
+            PreviousOp = RSPInstruction(CurrentPC, *(uint32_t *)(m_IMEM + (CurrentPC & 0xFFC)));
 
             if (IsOpcodeNop(CurrentPC) && IsOpcodeNop(CurrentPC + 4) && IsOpcodeNop(CurrentPC + 8))
             {
@@ -734,7 +733,7 @@ void CRSPRecompiler::BuildBranchLabels(void)
     {
         RspOp.Value = *(uint32_t *)(RSPInfo.IMEM + i);
 
-        if (IsOpcodeBranch(i, RspOp))
+        if (RSPInstruction(i, RspOp.Value).IsBranch())
         {
             if (RspCode.LabelCount >= (sizeof(RspCode.BranchLabels) / sizeof(RspCode.BranchLabels[0])) - 1)
             {

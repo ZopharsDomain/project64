@@ -7,6 +7,7 @@
 #include <Project64-rsp-core/cpu/RSPCpu.h>
 #include <Project64-rsp-core/cpu/RSPInstruction.h>
 #include <Project64-rsp-core/cpu/RSPOpcode.h>
+#include <Project64-rsp-core/cpu/RspLog.h>
 #include <Project64-rsp-core/cpu/RspMemory.h>
 #include <Project64-rsp-core/cpu/RspTypes.h>
 
@@ -245,107 +246,6 @@ bool IsRegisterConstant(uint32_t Reg, uint32_t * Constant)
 }
 
 /*
-IsOpcodeBranch
-Output:
-True: Opcode is a branch
-False: Opcode is not a branch
-Input: PC
-*/
-
-bool IsOpcodeBranch(uint32_t PC, RSPOpcode RspOp)
-{
-    PC = PC; // Unused
-
-    switch (RspOp.op)
-    {
-    case RSP_REGIMM:
-        switch (RspOp.rt)
-        {
-        case RSP_REGIMM_BLTZ:
-        case RSP_REGIMM_BGEZ:
-        case RSP_REGIMM_BLTZAL:
-        case RSP_REGIMM_BGEZAL:
-            return true;
-        default:
-            //CompilerWarning(stdstr_f(stdstr_f("Unknown opcode in IsOpcodeBranch\n%s",RSPOpcodeName(RspOp.Hex,PC)).c_str());
-            break;
-        }
-        break;
-    case RSP_SPECIAL:
-        switch (RspOp.funct)
-        {
-        case RSP_SPECIAL_SLL:
-        case RSP_SPECIAL_SRL:
-        case RSP_SPECIAL_SRA:
-        case RSP_SPECIAL_SLLV:
-        case RSP_SPECIAL_SRLV:
-        case RSP_SPECIAL_SRAV:
-        case RSP_SPECIAL_ADD:
-        case RSP_SPECIAL_ADDU:
-        case RSP_SPECIAL_SUB:
-        case RSP_SPECIAL_SUBU:
-        case RSP_SPECIAL_AND:
-        case RSP_SPECIAL_OR:
-        case RSP_SPECIAL_XOR:
-        case RSP_SPECIAL_NOR:
-        case RSP_SPECIAL_SLT:
-        case RSP_SPECIAL_SLTU:
-        case RSP_SPECIAL_BREAK:
-            break;
-
-        case RSP_SPECIAL_JALR:
-        case RSP_SPECIAL_JR:
-            return true;
-
-        default:
-            //CompilerWarning(stdstr_f("Unknown opcode in IsOpcodeBranch\n%s",RSPOpcodeName(RspOp.Hex,PC)).c_str());
-            break;
-        }
-        break;
-    case RSP_J:
-    case RSP_JAL:
-    case RSP_BEQ:
-    case RSP_BNE:
-    case RSP_BLEZ:
-    case RSP_BGTZ:
-        return true;
-
-    case RSP_ADDI:
-    case RSP_ADDIU:
-    case RSP_SLTI:
-    case RSP_SLTIU:
-    case RSP_ANDI:
-    case RSP_ORI:
-    case RSP_XORI:
-    case RSP_LUI:
-
-    case RSP_CP0:
-    case RSP_CP2:
-        break;
-
-    case RSP_LB:
-    case RSP_LH:
-    case RSP_LW:
-    case RSP_LBU:
-    case RSP_LHU:
-    case RSP_SB:
-    case RSP_SH:
-    case RSP_SW:
-        break;
-
-    case RSP_LC2:
-    case RSP_SC2:
-        break;
-
-    default:
-        //CompilerWarning(stdstr_f("Unknown opcode in IsOpcodeBranch\n%s",RSPOpcodeName(RspOp.Hex,PC)).c_str());
-        break;
-    }
-
-    return false;
-}
-
-/*
 GetInstructionInfo
 Output: None in regard to return value
 Input: Pointer to info structure, fills this
@@ -396,30 +296,30 @@ typedef struct
 
 #pragma warning(pop)
 
-void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
+void GetInstructionInfo(uint32_t PC, const RSPOpcode & RspOp, OPCODE_INFO * info)
 {
-    switch (RspOp->op)
+    switch (RspOp.op)
     {
     case RSP_REGIMM:
-        switch (RspOp->rt)
+        switch (RspOp.rt)
         {
         case RSP_REGIMM_BLTZ:
         case RSP_REGIMM_BLTZAL:
         case RSP_REGIMM_BGEZ:
         case RSP_REGIMM_BGEZAL:
             info->flags = InvalidOpcode;
-            info->SourceReg0 = RspOp->rs;
+            info->SourceReg0 = RspOp.rs;
             info->SourceReg1 = UNUSED_OPERAND;
             break;
 
         default:
-            CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp->Value).NameAndParam().c_str()).c_str());
+            CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp.Value).NameAndParam().c_str()).c_str());
             info->flags = InvalidOpcode;
             break;
         }
         break;
     case RSP_SPECIAL:
-        switch (RspOp->funct)
+        switch (RspOp.funct)
         {
         case RSP_SPECIAL_BREAK:
             info->DestReg = UNUSED_OPERAND;
@@ -431,8 +331,8 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
         case RSP_SPECIAL_SLL:
         case RSP_SPECIAL_SRL:
         case RSP_SPECIAL_SRA:
-            info->DestReg = RspOp->rd;
-            info->SourceReg0 = RspOp->rt;
+            info->DestReg = RspOp.rd;
+            info->SourceReg0 = RspOp.rt;
             info->SourceReg1 = UNUSED_OPERAND;
             info->flags = GPR_Instruction;
             break;
@@ -449,9 +349,9 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
         case RSP_SPECIAL_NOR:
         case RSP_SPECIAL_SLT:
         case RSP_SPECIAL_SLTU:
-            info->DestReg = RspOp->rd;
-            info->SourceReg0 = RspOp->rs;
-            info->SourceReg1 = RspOp->rt;
+            info->DestReg = RspOp.rd;
+            info->SourceReg0 = RspOp.rs;
+            info->SourceReg1 = RspOp.rt;
             info->flags = GPR_Instruction;
             break;
 
@@ -462,7 +362,7 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
             break;
 
         default:
-            CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp->Value).NameAndParam().c_str()).c_str());
+            CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp.Value).NameAndParam().c_str()).c_str());
             info->flags = InvalidOpcode;
             break;
         }
@@ -476,13 +376,13 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
     case RSP_BEQ:
     case RSP_BNE:
         info->flags = InvalidOpcode;
-        info->SourceReg0 = RspOp->rt;
-        info->SourceReg1 = RspOp->rs;
+        info->SourceReg0 = RspOp.rt;
+        info->SourceReg1 = RspOp.rs;
         break;
     case RSP_BLEZ:
     case RSP_BGTZ:
         info->flags = InvalidOpcode;
-        info->SourceReg0 = RspOp->rs;
+        info->SourceReg0 = RspOp.rs;
         info->SourceReg1 = UNUSED_OPERAND;
         break;
 
@@ -493,27 +393,27 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
     case RSP_ANDI:
     case RSP_ORI:
     case RSP_XORI:
-        info->DestReg = RspOp->rt;
-        info->SourceReg0 = RspOp->rs;
+        info->DestReg = RspOp.rt;
+        info->SourceReg0 = RspOp.rs;
         info->SourceReg1 = UNUSED_OPERAND;
         info->flags = GPR_Instruction;
         break;
 
     case RSP_LUI:
-        info->DestReg = RspOp->rt;
+        info->DestReg = RspOp.rt;
         info->SourceReg0 = UNUSED_OPERAND;
         info->SourceReg1 = UNUSED_OPERAND;
         info->flags = GPR_Instruction;
         break;
 
     case RSP_CP0:
-        switch (RspOp->rs)
+        switch (RspOp.rs)
         {
         case RSP_COP0_MF:
-            info->DestReg = RspOp->rt;
+            info->DestReg = RspOp.rt;
             info->SourceReg0 = UNUSED_OPERAND;
             info->SourceReg1 = UNUSED_OPERAND;
-            if (RspOp->rd == 0x4 || RspOp->rd == 0x7)
+            if (RspOp.rd == 0x4 || RspOp.rd == 0x7)
             {
                 info->flags = InvalidOpcode | COPO_MF_Instruction;
             }
@@ -524,7 +424,7 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
             break;
 
         case RSP_COP0_MT:
-            info->StoredReg = RspOp->rt;
+            info->StoredReg = RspOp.rt;
             info->SourceReg0 = UNUSED_OPERAND;
             info->SourceReg1 = UNUSED_OPERAND;
             info->flags = GPR_Instruction | Store_Operation;
@@ -533,9 +433,9 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
         break;
 
     case RSP_CP2:
-        if ((RspOp->rs & 0x10) != 0)
+        if ((RspOp.rs & 0x10) != 0)
         {
-            switch (RspOp->funct)
+            switch (RspOp.funct)
             {
             case RSP_VECTOR_VNOP:
                 info->DestReg = UNUSED_OPERAND;
@@ -557,9 +457,9 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
             case RSP_VECTOR_VNAND:
             case RSP_VECTOR_VNOR:
             case RSP_VECTOR_VNXOR:
-                info->DestReg = RspOp->sa;
-                info->SourceReg0 = RspOp->rd;
-                info->SourceReg1 = RspOp->rt;
+                info->DestReg = RspOp.sa;
+                info->SourceReg0 = RspOp.rd;
+                info->SourceReg1 = RspOp.rt;
                 info->flags = VEC_Instruction | VEC_ResetAccum | Accum_Operation;
                 break;
             case RSP_VECTOR_VMACF:
@@ -568,9 +468,9 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
             case RSP_VECTOR_VMADM:
             case RSP_VECTOR_VMADN:
             case RSP_VECTOR_VMADH:
-                info->DestReg = RspOp->sa;
-                info->SourceReg0 = RspOp->rd;
-                info->SourceReg1 = RspOp->rt;
+                info->DestReg = RspOp.sa;
+                info->SourceReg0 = RspOp.rd;
+                info->SourceReg1 = RspOp.rt;
                 info->flags = VEC_Instruction | VEC_Accumulate | Accum_Operation;
                 break;
             case RSP_VECTOR_VADD:
@@ -584,9 +484,9 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
             case RSP_VECTOR_VEQ:
             case RSP_VECTOR_VGE:
             case RSP_VECTOR_VNE:
-                info->DestReg = RspOp->sa;
-                info->SourceReg0 = RspOp->rd;
-                info->SourceReg1 = RspOp->rt;
+                info->DestReg = RspOp.sa;
+                info->SourceReg0 = RspOp.rd;
+                info->SourceReg1 = RspOp.rt;
                 info->flags = VEC_Instruction | VEC_ResetAccum | Accum_Operation | Flag_Instruction;
                 break;
 
@@ -596,45 +496,45 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
             case RSP_VECTOR_VRCPH:
             case RSP_VECTOR_VRSQL:
             case RSP_VECTOR_VRSQH:
-                info->DestReg = RspOp->sa;
-                info->SourceReg0 = RspOp->rt;
+                info->DestReg = RspOp.sa;
+                info->SourceReg0 = RspOp.rt;
                 info->SourceReg1 = UNUSED_OPERAND;
                 info->flags = VEC_Instruction | VEC_ResetAccum | Accum_Operation; // Assume reset?
                 break;
 
             case RSP_VECTOR_VMRG:
-                info->DestReg = RspOp->sa;
-                info->SourceReg0 = RspOp->rt;
-                info->SourceReg1 = RspOp->rd;
+                info->DestReg = RspOp.sa;
+                info->SourceReg0 = RspOp.rt;
+                info->SourceReg1 = RspOp.rd;
                 info->flags = VEC_Instruction | VEC_ResetAccum | Accum_Operation | Flag_Instruction; // Assume reset?
                 break;
 
             case RSP_VECTOR_VSAW:
                 //	info->flags = InvalidOpcode;
-                info->DestReg = RspOp->sa;
+                info->DestReg = RspOp.sa;
                 info->SourceReg0 = UNUSED_OPERAND;
                 info->SourceReg1 = UNUSED_OPERAND;
                 info->flags = VEC_Instruction | Accum_Operation | VEC_Accumulate;
                 break;
 
             default:
-                CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp->Value).NameAndParam().c_str()).c_str());
+                CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp.Value).NameAndParam().c_str()).c_str());
                 info->flags = InvalidOpcode;
                 break;
             }
         }
         else
         {
-            switch (RspOp->rs)
+            switch (RspOp.rs)
             {
             case RSP_COP2_CT:
-                info->StoredReg = RspOp->rt;
+                info->StoredReg = RspOp.rt;
                 info->SourceReg0 = UNUSED_OPERAND;
                 info->SourceReg1 = UNUSED_OPERAND;
                 info->flags = GPR_Instruction | Store_Operation | Flag_Instruction;
                 break;
             case RSP_COP2_CF:
-                info->DestReg = RspOp->rt;
+                info->DestReg = RspOp.rt;
                 info->SourceReg0 = UNUSED_OPERAND;
                 info->SourceReg1 = UNUSED_OPERAND;
                 info->flags = GPR_Instruction | Load_Operation | Flag_Instruction;
@@ -642,19 +542,19 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
 
             // RD is always the vector register, RT is always GPR
             case RSP_COP2_MT:
-                info->DestReg = RspOp->rd;
-                info->SourceReg0 = RspOp->rt;
+                info->DestReg = RspOp.rd;
+                info->SourceReg0 = RspOp.rt;
                 info->SourceReg1 = UNUSED_OPERAND;
                 info->flags = VEC_Instruction | GPR_Instruction | Load_Operation;
                 break;
             case RSP_COP2_MF:
-                info->DestReg = RspOp->rt;
-                info->SourceReg0 = RspOp->rd;
+                info->DestReg = RspOp.rt;
+                info->SourceReg0 = RspOp.rd;
                 info->SourceReg1 = UNUSED_OPERAND;
                 info->flags = VEC_Instruction | GPR_Instruction | Store_Operation;
                 break;
             default:
-                CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp->Value).NameAndParam().c_str()).c_str());
+                CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp.Value).NameAndParam().c_str()).c_str());
                 info->flags = InvalidOpcode;
                 break;
             }
@@ -665,21 +565,21 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
     case RSP_LW:
     case RSP_LBU:
     case RSP_LHU:
-        info->DestReg = RspOp->rt;
-        info->IndexReg = RspOp->base;
+        info->DestReg = RspOp.rt;
+        info->IndexReg = RspOp.base;
         info->SourceReg1 = UNUSED_OPERAND;
         info->flags = Load_Operation | GPR_Instruction;
         break;
     case RSP_SB:
     case RSP_SH:
     case RSP_SW:
-        info->StoredReg = RspOp->rt;
-        info->IndexReg = RspOp->base;
+        info->StoredReg = RspOp.rt;
+        info->IndexReg = RspOp.base;
         info->SourceReg1 = UNUSED_OPERAND;
         info->flags = Store_Operation | GPR_Instruction;
         break;
     case RSP_LC2:
-        switch (RspOp->rd)
+        switch (RspOp.rd)
         {
         case RSP_LSC2_BV:
         case RSP_LSC2_SV:
@@ -689,8 +589,8 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
         case RSP_LSC2_LV:
         case RSP_LSC2_UV:
         case RSP_LSC2_PV:
-            info->DestReg = RspOp->rt;
-            info->IndexReg = RspOp->base;
+            info->DestReg = RspOp.rt;
+            info->IndexReg = RspOp.base;
             info->SourceReg1 = UNUSED_OPERAND;
             info->flags = Load_Operation | VEC_Instruction;
             break;
@@ -699,13 +599,13 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
             info->flags = InvalidOpcode;
             break;
         default:
-            CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp->Value).NameAndParam().c_str()).c_str());
+            CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp.Value).NameAndParam().c_str()).c_str());
             info->flags = InvalidOpcode;
             break;
         }
         break;
     case RSP_SC2:
-        switch (RspOp->rd)
+        switch (RspOp.rd)
         {
         case RSP_LSC2_BV:
         case RSP_LSC2_SV:
@@ -718,8 +618,8 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
         case RSP_LSC2_HV:
         case RSP_LSC2_FV:
         case RSP_LSC2_WV:
-            info->DestReg = RspOp->rt;
-            info->IndexReg = RspOp->base;
+            info->DestReg = RspOp.rt;
+            info->IndexReg = RspOp.base;
             info->SourceReg1 = UNUSED_OPERAND;
             info->flags = Store_Operation | VEC_Instruction;
             break;
@@ -727,13 +627,13 @@ void GetInstructionInfo(uint32_t PC, RSPOpcode * RspOp, OPCODE_INFO * info)
             info->flags = InvalidOpcode;
             break;
         default:
-            CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp->Value).NameAndParam().c_str()).c_str());
+            CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s", RSPInstruction(PC, RspOp.Value).NameAndParam().c_str()).c_str());
             info->flags = InvalidOpcode;
             break;
         }
         break;
     default:
-        /*	CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s",RSPOpcodeName(RspOp->Hex,PC)).c_str());
+        /*	CompilerWarning(stdstr_f("Unknown opcode in GetInstructionInfo\n%s",RSPOpcodeName(RspOp.Hex,PC)).c_str());
 	*/
         info->flags = InvalidOpcode;
         break;
@@ -764,8 +664,8 @@ bool DelaySlotAffectBranch(uint32_t PC)
     memset(&infoDelay, 0, sizeof(infoDelay));
     memset(&infoBranch, 0, sizeof(infoBranch));
 
-    GetInstructionInfo(PC, &BranchOp, &infoBranch);
-    GetInstructionInfo(DelayPC, &DelayOp, &infoDelay);
+    GetInstructionInfo(PC, BranchOp, &infoBranch);
+    GetInstructionInfo(DelayPC, DelayOp, &infoDelay);
 
     if ((infoDelay.flags & COPO_MF_Instruction) == COPO_MF_Instruction)
     {
@@ -798,17 +698,19 @@ Input: Top, not the current operation, the one above
 Bottom: The current opcode for re-ordering bubble style
 */
 
-bool CompareInstructions(uint32_t PC, RSPOpcode * Top, RSPOpcode * Bottom)
+bool CompareInstructions(uint32_t PC, const RSPInstruction & Top, RSPOpcode * Bottom)
 {
     OPCODE_INFO info0, info1;
     uint32_t InstructionType;
 
-    GetInstructionInfo(PC - 4, Top, &info0);
-    GetInstructionInfo(PC, Bottom, &info1);
+    RSPOpcode TopOpcode;
+    TopOpcode.Value = Top.Value();
+    GetInstructionInfo(PC - 4, TopOpcode, &info0);
+    GetInstructionInfo(PC, *Bottom, &info1);
 
 #ifdef COMPARE_INSTRUCTIONS_VERBOSE
-    CPU_Message("Comparing %s (%X)", RSPOpcodeName(Top->Hex, PC - 4), PC - 4);
-    CPU_Message("to %s (%X)", RSPOpcodeName(Bottom->Hex, PC), PC);
+    CPU_Message("Comparing %s (%X)", Top.NameAndParam().c_str(), Top.Address());
+    CPU_Message("to %s (%X)", RSPInstruction(PC, Bottom->Value).NameAndParam().c_str(), PC);
 #endif
 
     // Usually branches and such
