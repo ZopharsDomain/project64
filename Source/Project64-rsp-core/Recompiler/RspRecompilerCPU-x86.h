@@ -76,8 +76,6 @@ extern bool ChangedPC;
 
 bool DelaySlotAffectBranch(uint32_t PC);
 bool CompareInstructions(uint32_t PC, const RSPInstruction & Top, RSPOpcode * Bottom);
-bool IsOpcodeNop(uint32_t PC);
-
 bool IsRegisterConstant(uint32_t Reg, uint32_t * Constant);
 
 #define MainBuffer 0

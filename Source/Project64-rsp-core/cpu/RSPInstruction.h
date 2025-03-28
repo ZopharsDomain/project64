@@ -11,6 +11,7 @@ public:
 
     uint32_t Address() const;
     bool IsBranch() const;
+    bool IsNop() const;
     const char * Name() const;
     const char * Param() const;
     std::string NameAndParam() const;

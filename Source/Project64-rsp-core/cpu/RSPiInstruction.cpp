@@ -106,6 +106,11 @@ bool RSPInstruction::IsBranch() const
     return false;
 }
 
+bool RSPInstruction::IsNop() const
+{
+    return m_Instruction.op == RSP_SPECIAL && m_Instruction.funct == RSP_SPECIAL_SLL && m_Instruction.rd == 0;
+}
+
 const char * RSPInstruction::Name() const
 {
     if (m_Name[0] == '\0')

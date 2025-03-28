@@ -14,24 +14,6 @@
 //#define COMPARE_INSTRUCTIONS_VERBOSE
 
 /*
-IsOpcodeNop
-Output: bool whether opcode at PC is a NOP
-Input: PC
-*/
-
-bool IsOpcodeNop(uint32_t PC)
-{
-    RSPOpcode RspOp;
-    RspOp.Value = *(uint32_t *)(RSPInfo.IMEM + (PC & 0xFFC));
-    if (RspOp.op == RSP_SPECIAL && RspOp.funct == RSP_SPECIAL_SLL)
-    {
-        return (RspOp.rd == 0) ? true : false;
-    }
-
-    return false;
-}
-
-/*
 IsRegisterConstant
 Output:
 True: Register is constant throughout
@@ -651,7 +633,7 @@ Input: PC
 bool DelaySlotAffectBranch(uint32_t PC)
 {
     uint32_t DelayPC = (PC + 4) & 0xFFC;
-    if (IsOpcodeNop(DelayPC) == true)
+    if (RSPInstruction(DelayPC, *(uint32_t *)(RSPInfo.IMEM + PC)).IsNop())
     {
         return false;
     }
