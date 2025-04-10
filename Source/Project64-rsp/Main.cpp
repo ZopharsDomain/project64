@@ -190,7 +190,7 @@ void FixMenuState(void)
     CheckMenuItem(hRSPMenu, ID_BREAKONSTARTOFTASK, MF_BYCOMMAND | (BreakOnStart ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_LOGRDPCOMMANDS, MF_BYCOMMAND | (LogRDP ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_SETTINGS_SYNCCPU, MF_BYCOMMAND | (SyncCPU ? MFS_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(hRSPMenu, ID_SETTINGS_LOGX86CODE, MF_BYCOMMAND | (LogX86Code ? MFS_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hRSPMenu, ID_SETTINGS_LOGASMCODE, MF_BYCOMMAND | (LogAsmCode ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_SETTINGS_MULTITHREADED, MF_BYCOMMAND | (MultiThreadedDefault ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_PROFILING_ON, MF_BYCOMMAND | (Profiling ? MFS_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hRSPMenu, ID_PROFILING_OFF, MF_BYCOMMAND | (Profiling ? MFS_UNCHECKED : MF_CHECKED));
@@ -382,15 +382,15 @@ void ProcessMenuItem(int32_t ID)
         }
         break;
     }
-    case ID_SETTINGS_LOGX86CODE:
+    case ID_SETTINGS_LOGASMCODE:
     {
-        bool Checked = (GetMenuState(hRSPMenu, ID_SETTINGS_LOGX86CODE, MF_BYCOMMAND) & MFS_CHECKED) != 0;
-        CheckMenuItem(hRSPMenu, ID_SETTINGS_LOGX86CODE, MF_BYCOMMAND | (Checked ? MFS_UNCHECKED : MFS_CHECKED));
-        SetSetting(Set_LogX86Code, !Checked);
+        bool Checked = (GetMenuState(hRSPMenu, ID_SETTINGS_LOGASMCODE, MF_BYCOMMAND) & MFS_CHECKED) != 0;
+        CheckMenuItem(hRSPMenu, ID_SETTINGS_LOGASMCODE, MF_BYCOMMAND | (Checked ? MFS_UNCHECKED : MFS_CHECKED));
+        SetSetting(Set_LogAsmCode, !Checked);
         if (DebuggingEnabled)
         {
-            LogX86Code = !Checked;
-            if (LogX86Code)
+            LogAsmCode = !Checked;
+            if (LogAsmCode)
             {
                 StartCPULog();
             }
@@ -617,7 +617,7 @@ EXPORT void EnableDebugging(int Enabled)
     {
         BreakOnStart = GetSetting(Set_BreakOnStart) != 0;
         LogRDP = GetSetting(Set_LogRDP) != 0;
-        LogX86Code = GetSetting(Set_LogX86Code) != 0;
+        LogAsmCode = GetSetting(Set_LogAsmCode) != 0;
         Profiling = GetSetting(Set_Profiling) != 0;
         IndvidualBlock = GetSetting(Set_IndvidualBlock) != 0;
         ShowErrors = GetSetting(Set_ShowErrors) != 0;
@@ -645,7 +645,7 @@ EXPORT void EnableDebugging(int Enabled)
     {
         RDPLog.StartLog();
     }
-    if (LogX86Code)
+    if (LogAsmCode)
     {
         StartCPULog();
     }

@@ -14,7 +14,7 @@ RSPCpuMethod CRSPSettings::m_CPUMethod = RSPCpuMethod::HighLevelEmulation;
 #endif
 
 uint16_t Set_AudioHle = 0, Set_GraphicsHle = 0, Set_MultiThreaded = 0, Set_AllocatedRdramSize = 0, Set_DirectoryLog = 0;
-bool GraphicsHle = true, AudioHle, ConditionalMove, SyncCPU = false, RspMultiThreaded = false, LogX86Code = false;
+bool GraphicsHle = true, AudioHle, ConditionalMove, SyncCPU = false, RspMultiThreaded = false, LogAsmCode = false;
 bool DebuggingEnabled = false, Profiling, IndvidualBlock, ShowErrors, BreakOnStart = false, LogRDP = false;
 
 void CRSPSettings::EnableDebugging(bool Enabled)
@@ -35,7 +35,7 @@ void CRSPSettings::InitializeRspSetting(void)
     RegisterSetting(Set_BreakOnStart, Data_DWORD_General, "Break on Start", NULL, BreakOnStart, NULL);
     RegisterSetting(Set_CPUCore, Data_DWORD_General, "CPU Method", NULL, (int)m_CPUMethod, NULL);
     RegisterSetting(Set_LogRDP, Data_DWORD_General, "Log RDP", NULL, LogRDP, NULL);
-    RegisterSetting(Set_LogX86Code, Data_DWORD_General, "Log X86 Code", NULL, LogX86Code, NULL);
+    RegisterSetting(Set_LogAsmCode, Data_DWORD_General, "Log X86 Code", NULL, LogAsmCode, NULL);
     RegisterSetting(Set_Profiling, Data_DWORD_General, "Profiling", NULL, Profiling, NULL);
     RegisterSetting(Set_IndvidualBlock, Data_DWORD_General, "Individual Block", NULL, IndvidualBlock, NULL);
     RegisterSetting(Set_ShowErrors, Data_DWORD_General, "Show Errors", NULL, ShowErrors, NULL);

@@ -195,7 +195,7 @@ BEGIN
         MENUITEM "Show Compiler Errors",        ID_SHOWCOMPILERERRORS
         MENUITEM "Break on start of task",      ID_BREAKONSTARTOFTASK
         MENUITEM "Log RDP Commands",            ID_LOGRDPCOMMANDS
-        MENUITEM "Log X86 code",                ID_SETTINGS_LOGX86CODE
+        MENUITEM "Log asm code",                ID_SETTINGS_LOGASMCODE
         MENUITEM "Sync CPU",                    ID_SETTINGS_SYNCCPU
         MENUITEM "Multithreaded",               ID_SETTINGS_MULTITHREADED
     END

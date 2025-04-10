@@ -93,7 +93,7 @@ void RspPluginLoaded(void)
 {
     BreakOnStart = false;
     LogRDP = false;
-    LogX86Code = false;
+    LogAsmCode = false;
     Profiling = false;
     IndvidualBlock = false;
     ShowErrors = false;
