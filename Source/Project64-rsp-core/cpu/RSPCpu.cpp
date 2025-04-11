@@ -95,6 +95,25 @@ be greater than the number of cycles that the RSP should have performed.
 
 uint32_t DoRspCycles(uint32_t Cycles)
 {
+#if defined(__amd64__) || defined(_M_X64)
+    if (CRSPSettings::CPUMethod() == RSPCpuMethod::RecompilerTasks)
+    {
+        if (!RSPSystem.IsHleTask() || !RSPSystem.HleTaskRecompiler())
+        {
+            if (g_RSPDebugger != nullptr)
+            {
+                g_RSPDebugger->RspCyclesStart();
+                RSPSystem.ExecuteOps((uint32_t)-1, (uint32_t)-1);
+                g_RSPDebugger->RspCyclesStop();
+            }
+            else
+            {
+                RSPSystem.ExecuteOps((uint32_t)-1, (uint32_t)-1);
+            }
+        }
+        return Cycles;
+    }
+#endif
     if (CRSPSettings::CPUMethod() == RSPCpuMethod::HighLevelEmulation && RSPSystem.ProcessHleTask())
     {
         return Cycles;
@@ -110,17 +129,13 @@ uint32_t DoRspCycles(uint32_t Cycles)
     {
         RSPSystem.RunRecompiler();
     }
-#endif
-#if defined(__amd64__) || defined(_M_X64)
-    if (CRSPSettings::CPUMethod() == RSPCpuMethod::RecompilerTasks)
-    {
-        RSPSystem.ExecuteOps((uint32_t)-1, (uint32_t)-1);
-    }
-#endif
     else
     {
+#endif
         RSPSystem.ExecuteOps((uint32_t)-1, (uint32_t)-1);
+#if defined(__i386__) || defined(_M_IX86)
     }
+#endif
     if (g_RSPDebugger != nullptr)
     {
         g_RSPDebugger->RspCyclesStop();

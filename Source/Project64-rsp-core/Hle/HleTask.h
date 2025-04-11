@@ -49,13 +49,16 @@ public:
 
     bool IsHleTask(void);
     bool ProcessHleTask(void);
+    bool HleTaskRecompiler(void);
 
 private:
     CHleTask(void);
     CHleTask(const CHleTask & copy);
     CHleTask & operator=(const CHleTask & rhs);
 
-    void ExecuteTask_1a13a51a(TASK_INFO & TaskInfo);
+    void SetupCommandList(const TASK_INFO & TaskInfo);
+    void ExecuteTask_1a13a51a(const TASK_INFO & TaskInfo);
+    void SetupTask(const TASK_INFO & TaskInfo);
 
     void (*&CheckInterrupts)(void);
     void (*&ProcessDList)(void);

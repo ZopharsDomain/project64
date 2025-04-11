@@ -41,7 +41,59 @@ bool CHleTask::IsHleTask(void)
     return false;
 }
 
-void CHleTask::ExecuteTask_1a13a51a(TASK_INFO & TaskInfo)
+#if defined(__amd64__) || defined(_M_X64)
+void CHleTask::SetupCommandList(const TASK_INFO & TaskInfo)
+{
+    uint32_t JumpTableLength = 0x7E, JumpTablePos = 0x10;
+    if ((HLETaskType)(TaskInfo.Type) == HLETaskType::Audio)
+    {
+        if (*((uint32_t *)&m_DMEM[0]) == 0x00000001 && *((uint32_t *)&m_DMEM[0x30]) == 0xf0000f00)
+        {
+            JumpTableLength = 0x10;
+            JumpTablePos = 0x10;
+        }
+    }
+
+    uint32_t JumpTableCRC = crc32(0L, m_IMEM + JumpTablePos, JumpTableLength << 1);
+    TaskFunctionMap::iterator itr = m_FunctionMap.find(JumpTableCRC);
+    if (itr != m_FunctionMap.end())
+    {
+        m_TaskFunctions = &itr->second;
+        return;
+    }
+
+    if (m_FunctionMap.size() > 0)
+    {
+        g_Notify->BreakPoint(__FILE__, __LINE__);
+    }
+    m_TaskFunctions = nullptr;
+
+    TaskFunctions JumpFunctions;
+    for (uint32_t i = 0, n = JumpTableLength; i < n; i++)
+    {
+        uint16_t FuncAddress = *((uint16_t *)(m_DMEM + (((i << 1) + JumpTablePos) ^ 2)));
+        if (FuncAddress != 0x1118)
+        {
+            m_Recompiler.CompileHLETask(FuncAddress);
+            void * FuncPtr = *(JumpTable + ((FuncAddress & 0xFFF) >> 2));
+            JumpFunctions.emplace_back(TaskFunctionAddress(FuncAddress, FuncPtr));
+        }
+        else
+        {
+            JumpFunctions.emplace_back(TaskFunctionAddress(FuncAddress, nullptr));
+        }
+    }
+    m_FunctionMap[JumpTableCRC] = JumpFunctions;
+    itr = m_FunctionMap.find(JumpTableCRC);
+    if (itr == m_FunctionMap.end())
+    {
+        g_Notify->BreakPoint(__FILE__, __LINE__);
+        return;
+    }
+    m_TaskFunctions = &itr->second;
+}
+
+void CHleTask::ExecuteTask_1a13a51a(const TASK_INFO & TaskInfo)
 {
     *((uint32_t *)(m_DMEM + 0x320)) = 0;
     GPR_T8 = 0x360;
@@ -92,16 +144,13 @@ void CHleTask::ExecuteTask_1a13a51a(TASK_INFO & TaskInfo)
         {
             RSPSystem.SyncSystem()->ExecuteOps(0x10000, 0x118);
         }
-#if defined(_M_IX86) && defined(_MSC_VER)
-        void * Block = FunctionAddress.second;
-        _asm {
-            pushad
-            call Block
-            popad
+        typedef void (*FuncPtr)();
+        FuncPtr func = (FuncPtr)(*(JumpTable + ((*m_SP_PC_REG & 0xFFF) >> 2)));
+        if (func == nullptr)
+        {
+            g_Notify->BreakPoint(__FILE__, __LINE__);
         }
-#else
-        g_Notify->BreakPoint(__FILE__, __LINE__);
-#endif
+        func();
         if (SyncCPU)
         {
             RSPSystem.BasicSyncCheck();
@@ -147,6 +196,41 @@ void CHleTask::ExecuteTask_1a13a51a(TASK_INFO & TaskInfo)
     }
 }
 
+void CHleTask::SetupTask(const TASK_INFO & TaskInfo)
+{
+    if (TaskInfo.Flags != 0)
+    {
+        g_Notify->BreakPoint(__FILE__, __LINE__);
+    }
+    if (*m_SP_DMA_FULL_REG != 0)
+    {
+        g_Notify->BreakPoint(__FILE__, __LINE__);
+    }
+    m_RSPRegisterHandler->WriteReg(RSPRegister_MEM_ADDR, 0);
+    m_RSPRegisterHandler->WriteReg(RSPRegister_DRAM_ADDR, TaskInfo.UcodeData);
+    m_RSPRegisterHandler->WriteReg(RSPRegister_RD_LEN, TaskInfo.UcodeDataSize);
+    if (*m_SP_DMA_BUSY_REG != 0 || (*m_SP_STATUS_REG & 0x80) != 0)
+    {
+        g_Notify->BreakPoint(__FILE__, __LINE__);
+    }
+    m_RSPRegisterHandler->WriteReg(RSPRegister_MEM_ADDR, 0x1080);
+    m_RSPRegisterHandler->WriteReg(RSPRegister_DRAM_ADDR, TaskInfo.Ucode);
+    m_RSPRegisterHandler->WriteReg(RSPRegister_RD_LEN, 0x0F7F);
+    if (*m_SP_DMA_BUSY_REG != 0 || (*m_SP_STATUS_REG & 0x80) != 0)
+    {
+        g_Notify->BreakPoint(__FILE__, __LINE__);
+    }
+    *m_SP_SEMAPHORE_REG = 0;
+    if (SyncCPU)
+    {
+        *m_SP_PC_REG = 0x80;
+        RSPSystem.SyncSystem()->ExecuteOps(200, 0x080);
+        RSPSystem.BasicSyncCheck();
+    }
+    SetupCommandList(TaskInfo);
+}
+#endif
+
 bool CHleTask::ProcessHleTask(void)
 {
     TASK_INFO & TaskInfo = *((TASK_INFO *)(m_DMEM + 0xFC0));
@@ -184,4 +268,30 @@ bool CHleTask::ProcessHleTask(void)
         return true;
     }
     return false;
+}
+
+bool CHleTask::HleTaskRecompiler(void)
+{
+    const TASK_INFO & TaskInfo = *((TASK_INFO *)(m_DMEM + 0xFC0));
+
+    if (SyncCPU)
+    {
+        RSPSystem.SetupSyncCPU();
+    }
+    SetupTask(TaskInfo);
+    uint32_t UcodeSize = TaskInfo.UcodeSize;
+    if (UcodeSize < 0x4 || TaskInfo.UcodeSize > 0x0F80)
+    {
+        UcodeSize = 0x0F80;
+    }
+    m_UcodeCRC = crc32(0L, m_IMEM + 0x80, UcodeSize);
+    if (m_UcodeCRC == 0x1a13a51a)
+    {
+        ExecuteTask_1a13a51a(TaskInfo);
+    }
+    else
+    {
+        g_Notify->BreakPoint(__FILE__, __LINE__);
+    }
+    return true;
 }

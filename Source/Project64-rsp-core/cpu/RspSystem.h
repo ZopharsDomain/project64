@@ -1,6 +1,7 @@
 #pragma once
 #include <Project64-rsp-core/Hle/HleTask.h>
 #include <Project64-rsp-core/RSPInfo.h>
+#include <Project64-rsp-core/Recompiler/RspRecompilerCPU-x64.h>
 #include <Project64-rsp-core/Recompiler/RspRecompilerCPU-x86.h>
 #include <Project64-rsp-core/cpu/RSPInterpreterOps.h>
 #include <Project64-rsp-core/cpu/RSPRegisters.h>
@@ -53,9 +54,7 @@ private:
 
     CRSPSystem * m_SyncSystem;
     CRSPSystem * m_BaseSystem;
-#if defined(__i386__) || defined(_M_IX86)
     CRSPRecompiler m_Recompiler;
-#endif
     RSPRegisterHandlerPlugin * m_RSPRegisterHandler;
     CRSPRegisters m_Reg;
     RSPOp m_Op;

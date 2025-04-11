@@ -13,9 +13,7 @@ CRSPSystem::CRSPSystem() :
     CHleTask(*this),
     m_SyncSystem(nullptr),
     m_BaseSystem(nullptr),
-#if defined(__i386__) || defined(_M_IX86)
     m_Recompiler(*this),
-#endif
     m_RSPRegisterHandler(nullptr),
     m_Op(*this),
     m_NextInstruction(RSPPIPELINE_NORMAL),
@@ -133,6 +131,7 @@ void CRSPSystem::Reset(RSP_INFO & Info)
     {
         m_SyncSystem->Reset(Info);
     }
+    m_Recompiler.Reset();
 }
 
 void CRSPSystem::RomClosed(void)

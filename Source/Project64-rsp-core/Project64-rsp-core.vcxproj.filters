@@ -66,9 +66,6 @@
     <ClCompile Include="Recompiler\RspRecompilerAnalysis.cpp">
       <Filter>Source Files\Recompiler</Filter>
     </ClCompile>
-    <ClCompile Include="Recompiler\RspRecompilerCPU.cpp">
-      <Filter>Source Files\Recompiler</Filter>
-    </ClCompile>
     <ClCompile Include="Recompiler\RspRecompilerSections.cpp">
       <Filter>Source Files\Recompiler</Filter>
     </ClCompile>
@@ -141,6 +138,15 @@
     <ClCompile Include="Recompiler\RspRecompilerOps-x86.cpp">
       <Filter>Source Files\Recompiler</Filter>
     </ClCompile>
+    <ClCompile Include="Recompiler\RspRecompilerCPU-x86.cpp">
+      <Filter>Source Files\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="Recompiler\RspRecompilerCPU-x64.cpp">
+      <Filter>Source Files\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="Recompiler\RspAssembler.cpp">
+      <Filter>Source Files\Recompiler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cpu\RSPInstruction.h">
@@ -172,9 +178,6 @@
     </ClInclude>
     <ClInclude Include="Settings\RspSettings.h">
       <Filter>Header Files\Settings</Filter>
-    </ClInclude>
-    <ClInclude Include="Recompiler\RspRecompilerCPU.h">
-      <Filter>Header Files\Recompiler</Filter>
     </ClInclude>
     <ClInclude Include="cpu\RspMemory.h">
       <Filter>Header Files\cpu</Filter>
@@ -225,6 +228,18 @@
       <Filter>Header Files\hle</Filter>
     </ClInclude>
     <ClInclude Include="Recompiler\RspRecompilerOps-x86.h">
+      <Filter>Header Files\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Recompiler\RspRecompilerCPU-x86.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Recompiler\asmjit.h">
+      <Filter>Header Files\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Recompiler\RspAssembler.h">
+      <Filter>Header Files\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Recompiler\RspRecompilerCPU-x64.h">
       <Filter>Header Files\Recompiler</Filter>
     </ClInclude>
   </ItemGroup>

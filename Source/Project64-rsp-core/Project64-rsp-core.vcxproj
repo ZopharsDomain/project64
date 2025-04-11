@@ -37,6 +37,7 @@
     </PreBuildEvent>
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source\3rdParty\asmjit\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -64,8 +65,10 @@
     <ClCompile Include="Hle\mp3.cpp" />
     <ClCompile Include="Hle\musyx.cpp" />
     <ClCompile Include="Recompiler\Mmx.cpp" />
+    <ClCompile Include="Recompiler\RspAssembler.cpp" />
     <ClCompile Include="Recompiler\RspProfiling.cpp" />
     <ClCompile Include="Recompiler\RspRecompilerAnalysis.cpp" />
+    <ClCompile Include="Recompiler\RspRecompilerCPU-x64.cpp" />
     <ClCompile Include="Recompiler\RspRecompilerCPU-x86.cpp" />
     <ClCompile Include="Recompiler\RspRecompilerOps-x86.cpp" />
     <ClCompile Include="Recompiler\RspRecompilerSections.cpp" />
@@ -96,7 +99,10 @@
     <ClInclude Include="Hle\HleTask.h" />
     <ClInclude Include="Hle\mem.h" />
     <ClInclude Include="Hle\ucodes.h" />
+    <ClInclude Include="Recompiler\asmjit.h" />
+    <ClInclude Include="Recompiler\RspAssembler.h" />
     <ClInclude Include="Recompiler\RspProfiling.h" />
+    <ClInclude Include="Recompiler\RspRecompilerCPU-x64.h" />
     <ClInclude Include="Recompiler\RspRecompilerCPU-x86.h" />
     <ClInclude Include="Recompiler\RspRecompilerOps-x86.h" />
     <ClInclude Include="Recompiler\X86.h" />
