@@ -74,7 +74,6 @@ void CRSPRecompiler::CompileHLETask(uint32_t Address)
         CPULog->Flush();
         m_CodeLog.clear();
     }
-#endif
 }
 
 void CRSPRecompiler::Log(_Printf_format_string_ const char * Text, ...)
@@ -117,3 +116,4 @@ uintptr_t CRSPRecompiler::GetAddressOf(int value, ...)
 
     return (uintptr_t)Address;
 }
+#endif

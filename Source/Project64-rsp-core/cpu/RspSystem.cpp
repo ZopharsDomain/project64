@@ -131,7 +131,9 @@ void CRSPSystem::Reset(RSP_INFO & Info)
     {
         m_SyncSystem->Reset(Info);
     }
+#if defined(__amd64__) || defined(_M_X64)
     m_Recompiler.Reset();
+#endif
 }
 
 void CRSPSystem::RomClosed(void)

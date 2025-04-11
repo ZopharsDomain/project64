@@ -270,6 +270,7 @@ bool CHleTask::ProcessHleTask(void)
     return false;
 }
 
+#if defined(__amd64__) || defined(_M_X64)
 bool CHleTask::HleTaskRecompiler(void)
 {
     const TASK_INFO & TaskInfo = *((TASK_INFO *)(m_DMEM + 0xFC0));
@@ -295,3 +296,4 @@ bool CHleTask::HleTaskRecompiler(void)
     }
     return true;
 }
+#endif
