@@ -1,4 +1,5 @@
 #include <Project64-rsp-core/Hle/HleTask.h>
+#include <Project64-rsp-core/Recompiler/RspProfiling.h>
 #include <Project64-rsp-core/cpu/RSPRegisterHandlerPlugin.h>
 #include <Project64-rsp-core/cpu/RspMemory.h>
 #include <Project64-rsp-core/cpu/RspSystem.h>
@@ -62,6 +63,10 @@ void CHleTask::SetupCommandList(const TASK_INFO & TaskInfo)
         return;
     }
 
+    if (Profiling)
+    {
+        StartTimer((uint32_t)Timer_Compiling);
+    }
     if (m_FunctionMap.size() > 0)
     {
         g_Notify->BreakPoint(__FILE__, __LINE__);
@@ -74,8 +79,7 @@ void CHleTask::SetupCommandList(const TASK_INFO & TaskInfo)
         uint16_t FuncAddress = *((uint16_t *)(m_DMEM + (((i << 1) + JumpTablePos) ^ 2)));
         if (FuncAddress != 0x1118)
         {
-            m_Recompiler.CompileHLETask(FuncAddress);
-            void * FuncPtr = *(JumpTable + ((FuncAddress & 0xFFF) >> 2));
+            void * FuncPtr = m_Recompiler.CompileHLETask(FuncAddress);
             JumpFunctions.emplace_back(TaskFunctionAddress(FuncAddress, FuncPtr));
         }
         else
@@ -91,6 +95,10 @@ void CHleTask::SetupCommandList(const TASK_INFO & TaskInfo)
         return;
     }
     m_TaskFunctions = &itr->second;
+    if (Profiling)
+    {
+        StopTimer();
+    }
 }
 
 void CHleTask::ExecuteTask_1a13a51a(const TASK_INFO & TaskInfo)
@@ -145,7 +153,7 @@ void CHleTask::ExecuteTask_1a13a51a(const TASK_INFO & TaskInfo)
             RSPSystem.SyncSystem()->ExecuteOps(0x10000, 0x118);
         }
         typedef void (*FuncPtr)();
-        FuncPtr func = (FuncPtr)(*(JumpTable + ((*m_SP_PC_REG & 0xFFF) >> 2)));
+        FuncPtr func = (FuncPtr)FunctionAddress.second;
         if (func == nullptr)
         {
             g_Notify->BreakPoint(__FILE__, __LINE__);

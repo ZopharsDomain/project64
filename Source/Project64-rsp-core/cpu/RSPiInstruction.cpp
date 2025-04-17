@@ -15,8 +15,8 @@ RSPInstruction & RSPInstruction::operator=(const RSPInstruction & e)
 {
     m_Address = e.m_Address;
     m_Instruction.Value = e.m_Instruction.Value;
-    memcpy(m_Name, e.m_Name, sizeof(m_Name));
-    memcpy(m_Param, e.m_Param, sizeof(m_Param));
+    m_Name[0] = '\0';
+    m_Param[0] = '\0';
     return *this;
 }
 

@@ -14,7 +14,7 @@ public:
     ~CRSPRecompiler();
 
     void Reset();
-    void CompileHLETask(uint32_t Address);
+    void * CompileHLETask(uint32_t Address);
     void Log(_Printf_format_string_ const char * Text, ...);
 
 private:

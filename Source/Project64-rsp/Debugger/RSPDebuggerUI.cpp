@@ -48,7 +48,7 @@ void RSPDebuggerUI::RspCyclesStop(void)
 {
     if (Profiling && !IndvidualBlock)
     {
-        StartTimer((DWORD)Timer_R4300_Running);
+        StartTimer((DWORD)Timer_None);
     }
 }
 

@@ -3,6 +3,7 @@
 #include "RspRecompilerCPU-x64.h"
 #include <Common/Log.h>
 #include <Project64-rsp-core/Recompiler/RspAssembler.h>
+#include <Project64-rsp-core/Recompiler/RspProfiling.h>
 #include <Project64-rsp-core/Settings/RspSettings.h>
 #include <Project64-rsp-core/cpu/RspMemory.h>
 #include <Project64-rsp-core/cpu/RspSystem.h>
@@ -18,11 +19,6 @@ CRSPRecompiler::CRSPRecompiler(CRSPSystem & System) :
     m_Assembler(nullptr)
 {
     m_Environment = asmjit::Environment::host();
-    m_CodeHolder.init(m_Environment);
-    m_CodeHolder.setErrorHandler(this);
-    m_CodeHolder.setLogger(nullptr);
-
-    m_Assembler = new RspAssembler(&m_CodeHolder, m_CodeLog);
 }
 
 CRSPRecompiler::~CRSPRecompiler()
@@ -36,35 +32,54 @@ CRSPRecompiler::~CRSPRecompiler()
 
 void CRSPRecompiler::Reset()
 {
-    m_Assembler->Reset();
+    if (m_Assembler != nullptr)
+    {
+        m_Assembler->Reset();
+    }
 }
 
-void CRSPRecompiler::CompileHLETask(uint32_t Address)
+void * CRSPRecompiler::CompileHLETask(uint32_t Address)
 {
+    void * funcPtr = RecompPos;
     Log("====== Block %d ======", m_BlockID++);
-    Log("asm code at: %016llX", (uint64_t)RecompPos);
+    Log("asm code at: %016llX", (uint64_t)funcPtr);
     Log("Jump table: %X", Table);
     Log("Start of block: %X", Address);
     Log("====== Recompiled code ======");
 
-    *(JumpTable + ((Address & 0xFFF) >> 2)) = RecompPos;
+    if (m_Assembler != nullptr)
+    {
+        delete m_Assembler;
+        m_Assembler = nullptr;
+    }
 
+    m_CodeHolder.reset();
+    m_CodeHolder.init(m_Environment);
+    m_CodeHolder.setErrorHandler(this);
+    m_CodeHolder.setLogger(nullptr);
+
+    m_Assembler = new RspAssembler(&m_CodeHolder, m_CodeLog);
     m_Assembler->push(asmjit::x86::rbp);
     m_Assembler->mov(asmjit::x86::rbp, asmjit::x86::rsp);
     m_Assembler->sub(asmjit::x86::rsp, 0x30);
+    m_Assembler->mov(asmjit::x86::rcx, asmjit::imm((uintptr_t)Address));
+    m_Assembler->mov(asmjit::x86::rax, asmjit::imm(AddressOf(&StartTimer)));
+    m_Assembler->call(asmjit::x86::rax);
     m_Assembler->mov(asmjit::x86::rcx, asmjit::imm((uintptr_t)&m_System));
     m_Assembler->mov(asmjit::x86::edx, asmjit::imm(0x10000));
     m_Assembler->mov(asmjit::x86::r8d, asmjit::imm(0x118));
     m_Assembler->mov(asmjit::x86::rax, asmjit::imm(AddressOf(&CRSPSystem::ExecuteOps)));
+    m_Assembler->call(asmjit::x86::rax);
+    m_Assembler->mov(asmjit::x86::rax, asmjit::imm(AddressOf(&StopTimer)));
     m_Assembler->call(asmjit::x86::rax);
     m_Assembler->add(asmjit::x86::rsp, 0x30);
     m_Assembler->pop(asmjit::x86::rbp);
     m_Assembler->ret();
     m_Assembler->finalize();
 
-    m_CodeHolder.relocateToBase((uint64_t)RecompPos);
+    m_CodeHolder.relocateToBase((uint64_t)funcPtr);
     size_t codeSize = m_CodeHolder.codeSize();
-    m_CodeHolder.copyFlattenedData(RecompPos, codeSize);
+    m_CodeHolder.copyFlattenedData(funcPtr, codeSize);
     RecompPos += codeSize;
 
     if (LogAsmCode && !m_CodeLog.empty() && CPULog != nullptr)
@@ -74,6 +89,7 @@ void CRSPRecompiler::CompileHLETask(uint32_t Address)
         CPULog->Flush();
         m_CodeLog.clear();
     }
+    return funcPtr;
 }
 
 void CRSPRecompiler::Log(_Printf_format_string_ const char * Text, ...)

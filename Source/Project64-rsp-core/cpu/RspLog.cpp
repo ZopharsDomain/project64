@@ -19,7 +19,7 @@ void StartCPULog(void)
         return;
     }
     char LogDir[260];
-    CPath LogFilePath(GetSystemSettingSz(Set_DirectoryLog, LogDir, sizeof(LogDir)), "RSP_x86Log.txt");
+    CPath LogFilePath(GetSystemSettingSz(Set_DirectoryLog, LogDir, sizeof(LogDir)), "RSP_asm.txt");
     CPULog = new CLog;
     if (CPULog != nullptr)
     {

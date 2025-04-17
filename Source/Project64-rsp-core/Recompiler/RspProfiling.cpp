@@ -5,9 +5,17 @@
 #include <Common/File.h>
 #include <Common/Log.h>
 #include <Common/StdString.h>
+#include <Common/path.h>
+#include <Project64-rsp-core/Settings/RspSettings.h>
 #include <Settings/Settings.h>
+#include <chrono>
+#include <intrin.h>
 #include <map>
+#include <thread>
 #include <vector>
+#ifdef WIN32
+#include <Windows.h>
+#endif
 
 class CRspProfiling
 {
@@ -21,16 +29,28 @@ class CRspProfiling
     } TIMER_NAME;
 
     uint32_t m_CurrentTimerAddr, CurrentDisplayCount;
+#if defined(_M_IX86) && defined(_MSC_VER)
     uint32_t m_StartTimeHi, m_StartTimeLo; // The current timer start time
+#else
+    uint64_t m_StartTime;
+#endif
     PROFILE_ENRTIES m_Entries;
+    double m_CpuFrequencyGHz;
 
 public:
     CRspProfiling()
     {
         m_CurrentTimerAddr = Timer_None;
+#ifdef WIN32
+        LARGE_INTEGER frequency;
+        QueryPerformanceFrequency(&frequency);
+        m_CpuFrequencyGHz = MeasureCpuFrequencyGHz();
+#else
+        g_Notify->BreakPoint(__FILE__, __LINE__);
+        m_CpuFrequencyGHz = 0;
+#endif
     }
 
-    // Recording timing against current timer, returns the address of the timer stopped
     uint32_t StartTimer(uint32_t Address)
     {
         uint32_t OldTimerAddr = StopTimer();
@@ -48,7 +68,9 @@ public:
         m_StartTimeHi = HiValue;
         m_StartTimeLo = LoValue;
 #else
-        g_Notify->BreakPoint(__FILE__, __LINE__);
+        _mm_lfence();
+        m_StartTime = __rdtsc();
+        _mm_lfence();
 #endif
         return OldTimerAddr;
     }
@@ -72,7 +94,12 @@ public:
         int64_t StopTime = ((uint64_t)HiValue << 32) + (uint64_t)LoValue;
         int64_t StartTime = ((uint64_t)m_StartTimeHi << 32) + (uint64_t)m_StartTimeLo;
         int64_t TimeTaken = StopTime - StartTime;
-
+#else
+        _mm_lfence();
+        uint64_t currentTime = __rdtsc();
+        _mm_lfence();
+        int64_t TimeTaken = currentTime - m_StartTime;
+#endif
         PROFILE_ENRTY Entry = m_Entries.find(m_CurrentTimerAddr);
         if (Entry != m_Entries.end())
         {
@@ -82,28 +109,44 @@ public:
         {
             m_Entries.insert(PROFILE_ENRTIES::value_type(m_CurrentTimerAddr, TimeTaken));
         }
-#else
-        g_Notify->BreakPoint(__FILE__, __LINE__);
-#endif
 
         uint32_t OldTimerAddr = m_CurrentTimerAddr;
         m_CurrentTimerAddr = Timer_None;
         return OldTimerAddr;
     }
 
-    // Reset all the counters back to 0
     void ResetCounters(void)
     {
         m_Entries.clear();
     }
 
-    // Generate a log file with the current results, this will also reset the counters
+    double ConvertCyclesToMilliseconds(uint64_t cycles, double cpuFreqGHz)
+    {
+        return (cycles / (cpuFreqGHz * 1e9)) * 1000.0;
+    }
+
+    double MeasureCpuFrequencyGHz()
+    {
+        DWORD_PTR oldMask = SetThreadAffinityMask(GetCurrentThread(), 1);
+        auto start_time = std::chrono::high_resolution_clock::now();
+        uint64_t start_cycles = __rdtsc();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        uint64_t end_cycles = __rdtsc();
+        auto end_time = std::chrono::high_resolution_clock::now();
+        SetThreadAffinityMask(GetCurrentThread(), oldMask);
+        double elapsed_seconds = std::chrono::duration<double>(end_time - start_time).count();
+        uint64_t elapsed_cycles = end_cycles - start_cycles;
+        return static_cast<double>(elapsed_cycles) / (elapsed_seconds * 1e9);
+    }
     void GenerateLog(void)
     {
         stdstr LogFileName;
         {
+            char LogDir[260];
+            CPath LogFilePath(GetSystemSettingSz(Set_DirectoryLog, LogDir, sizeof(LogDir)), "RSP_Profiling.txt");
+
             CLog Log;
-            Log.Open("RSP Profiling.txt");
+            Log.Open(LogFilePath);
             LogFileName = Log.FileName();
 
             // Get the total time
@@ -138,31 +181,25 @@ public:
             }
 
             TIMER_NAME TimerNames[] = {
-                {Timer_Compiling, "RSP: Compiling"},
+                {Timer_Compiling, "Compiling"},
                 {Timer_RSP_Running, "RSP: Running"},
-                {Timer_R4300_Running, "R4300i: Running"},
                 {Timer_RDP_Running, "RDP: Running"},
             };
 
-            for (size_t count = 0; count < ItemList.size(); count++)
+            for (size_t i = 0; i < ItemList.size(); i++)
             {
-                char Buffer[255];
-                float CpuUsage = (float)(((double)ItemList[count]->second / (double)TotalTime) * 100);
+                float CpuUsage = (float)(((double)ItemList[i]->second / (double)TotalTime) * 100);
 
-                if (CpuUsage <= 0.2)
-                {
-                    continue;
-                }
-                sprintf(Buffer, "Function 0x%08X", ItemList[count]->first);
+                stdstr_f name("Function 0x%08X", ItemList[i]->first);
                 for (int NameID = 0; NameID < (sizeof(TimerNames) / sizeof(TIMER_NAME)); NameID++)
                 {
-                    if (ItemList[count]->first == (uint32_t)TimerNames[NameID].Timer)
+                    if (ItemList[i]->first == (uint32_t)TimerNames[NameID].Timer)
                     {
-                        strcpy(Buffer, TimerNames[NameID].Name);
+                        name = TimerNames[NameID].Name;
                         break;
                     }
                 }
-                Log.LogF("%s\t%2.2f", Buffer, CpuUsage);
+                Log.LogF("%s\t%2.2f\t%llu\t%2.2f\n", name.c_str(), CpuUsage, ItemList[i]->second, ConvertCyclesToMilliseconds(ItemList[i]->second, m_CpuFrequencyGHz));
             }
         }
         ResetCounters();
