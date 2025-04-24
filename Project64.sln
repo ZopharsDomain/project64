@@ -98,6 +98,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ts2lang", "Source\GLideN64\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "softfloat", "Source\3rdParty\softfloat-3e\softfloat.vcxproj", "{2C54E724-7C6B-4A70-B4FB-421CF5CDDD79}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AsmJitLite", "Source\AsmJitLite\AsmJitLite.vcxproj", "{236A7004-8169-4528-B829-7726737FFCF2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -344,6 +346,14 @@ Global
 		{2C54E724-7C6B-4A70-B4FB-421CF5CDDD79}.Release|Win32.Build.0 = Release|Win32
 		{2C54E724-7C6B-4A70-B4FB-421CF5CDDD79}.Release|x64.ActiveCfg = Release|x64
 		{2C54E724-7C6B-4A70-B4FB-421CF5CDDD79}.Release|x64.Build.0 = Release|x64
+		{236A7004-8169-4528-B829-7726737FFCF2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{236A7004-8169-4528-B829-7726737FFCF2}.Debug|Win32.Build.0 = Debug|Win32
+		{236A7004-8169-4528-B829-7726737FFCF2}.Debug|x64.ActiveCfg = Debug|x64
+		{236A7004-8169-4528-B829-7726737FFCF2}.Debug|x64.Build.0 = Debug|x64
+		{236A7004-8169-4528-B829-7726737FFCF2}.Release|Win32.ActiveCfg = Release|Win32
+		{236A7004-8169-4528-B829-7726737FFCF2}.Release|Win32.Build.0 = Release|Win32
+		{236A7004-8169-4528-B829-7726737FFCF2}.Release|x64.ActiveCfg = Release|x64
+		{236A7004-8169-4528-B829-7726737FFCF2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

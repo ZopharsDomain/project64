@@ -41,11 +41,14 @@ void CRSPRecompiler::Reset()
 void * CRSPRecompiler::CompileHLETask(uint32_t Address)
 {
     void * funcPtr = RecompPos;
-    Log("====== Block %d ======", m_BlockID++);
-    Log("asm code at: %016llX", (uint64_t)funcPtr);
-    Log("Jump table: %X", Table);
-    Log("Start of block: %X", Address);
-    Log("====== Recompiled code ======");
+    if (LogAsmCode)
+    {
+        Log("====== Block %d ======", m_BlockID++);
+        Log("asm code at: %016llX", (uint64_t)funcPtr);
+        Log("Jump table: %X", Table);
+        Log("Start of block: %X", Address);
+        Log("====== Recompiled code ======");
+    }
 
     if (m_Assembler != nullptr)
     {

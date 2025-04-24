@@ -1,0 +1,5 @@
+#include "environment.h"
+
+ASMJIT_BEGIN_NAMESPACE
+
+ASMJIT_END_NAMESPACE

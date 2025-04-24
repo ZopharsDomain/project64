@@ -139,10 +139,13 @@ public:
     RSPFlag VCE;
 };
 
-extern const char * x86_Strings[8];
-extern const char * GPR_Strings[32];
 
+#if defined(__i386__) || defined(_M_IX86)
+extern const char * x86_Strings[8];
 #define x86_Name(Reg) (x86_Strings[(Reg)])
+#endif
+
+extern const char * GPR_Strings[32];
 #define GPR_Name(Reg) (GPR_Strings[(Reg)])
 
 #define COP0_Name(Reg)                                                       \
