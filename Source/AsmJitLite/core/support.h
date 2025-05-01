@@ -1,4 +1,10 @@
-#pragma once
+// This file is part of AsmJit project <https://asmjit.com>
+//
+// See asmjit.h or LICENSE.md for license and copyright information
+// SPDX-License-Identifier: Zlib
+
+#ifndef ASMJIT_CORE_SUPPORT_H_INCLUDED
+#define ASMJIT_CORE_SUPPORT_H_INCLUDED
 
 #include "../core/globals.h"
 
@@ -368,6 +374,21 @@ static constexpr bool isInt32(T x) noexcept {
                                   : sizeof(T) <= 2 || U(x) <= U(2147483647u);
 }
 
+//! Checks whether the given integer `x` can be casted to a 32-bit unsigned integer.
+template<typename T>
+static constexpr bool isUInt32(T x) noexcept {
+  typedef typename std::make_unsigned<T>::type U;
+
+  return std::is_signed<T>::value ? (sizeof(T) <= 4 || T(x) <= T(4294967295u)) && x >= T(0)
+                                  : (sizeof(T) <= 4 || U(x) <= U(4294967295u));
+}
+
+//! Checks whether the given integer `x` can be casted to a 32-bit unsigned integer.
+template<typename T>
+static constexpr bool isIntOrUInt32(T x) noexcept {
+  return sizeof(T) <= 4 ? true : (uint32_t(uint64_t(x) >> 32) + 1u) <= 1u;
+}
+
 static bool inline isEncodableOffset32(int32_t offset, uint32_t nBits) noexcept {
   uint32_t nRev = 32 - nBits;
   return Support::sar(Support::shl(offset, nRev), nRev) == offset;
@@ -703,3 +724,5 @@ struct Temporary {
 //! \}
 
 ASMJIT_END_NAMESPACE
+
+#endif // ASMJIT_CORE_SUPPORT_H_INCLUDED

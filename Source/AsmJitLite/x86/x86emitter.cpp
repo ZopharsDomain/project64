@@ -118,9 +118,38 @@ template<>
 Error EmitterExplicitT<Assembler>::add(Gp const & o0, Imm const & o1)
 {
     X86BufferWriter writer(_emitter);
-    int32_t immValue = (uint32_t)o1.value();
+    if (o0.size() == 8)
+    {
+        int64_t immValue = o1.value();
+        if (!Support::isInt32(immValue)) 
+        {
+            __debugbreak();
+            return kErrorInvalidRegType;
+        }
+        if ((o0.id() & ~7) != 0)
+        {
+            __debugbreak();
+            return kErrorInvalidRegType;
+        }
+        CPU_Message("add %s, 0x%X", x86_Name(o0), (uint32_t)immValue);
+        writer.emit8(0x48);
+        if (Support::isInt8(immValue))
+        {
+            writer.emit8(0x83);
+            writer.emit8(0xC0 + (o0.id() & 7));
+            writer.emit8((uint8_t)immValue);
+        }
+        else
+        {
+            writer.emit8(0x81);
+            writer.emit8(0xC0 + (o0.id() & 7));
+            writer.emit32(immValue);
+        }
+        return kErrorOk;
+    }
     if (o0.size() == 4)
     {
+        int32_t immValue = (uint32_t)o1.value();
         CPU_Message("add %s, 0x%X", x86_Name(o0), immValue);
         if (Support::isInt8(immValue))
         {
@@ -219,6 +248,25 @@ Error EmitterExplicitT<Assembler>::and_(Mem const & o0, Imm const & o1)
     }
     __debugbreak();
     return kErrorInvalidRegType;
+}
+
+Error EmitterExplicitT<Assembler>::call(Gp const & o0)
+{
+    X86BufferWriter writer(_emitter);
+    if (o0.size() == 8)
+    {
+        if ((o0.id() & ~7) != 0)
+        {
+            __debugbreak();
+            return kErrorInvalidRegType;
+        }
+        CPU_Message("call %s", x86_Name(o0));
+        writer.emit8(0xFF);
+        writer.emit8(0xD0 + (o0.id() & 7));
+        return kErrorOk;
+    }
+    __debugbreak();
+    return 0;
 }
 
 Error EmitterExplicitT<Assembler>::call(Mem const & /*o0*/)
@@ -586,6 +634,17 @@ Error EmitterExplicitT<Assembler>::lea(Gp const & o0, Mem const & o1)
 Error EmitterExplicitT<Assembler>::mov(Gp const & o0, Gp const & o1)
 {
     X86BufferWriter writer(_emitter);
+    if (o0.size() == 8 && o1.size() == 8)
+    {
+        if ((o0.id() & ~7) != 0 || (o1.id() & ~7) != 0)
+        {
+            __debugbreak();
+            return kErrorInvalidRegType;
+        }
+        writer.emit8(0x48);
+        writer.emit16(0xC089 + ((o0.id() & 7) << 8) + ((o1.id() & 7) << 11));
+        return kErrorOk;
+    }
     if (o0.size() == 4 && o1.size() == 4)
     {
         CPU_Message("mov %s, %s", x86_Name(o0), x86_Name(o1));
@@ -641,11 +700,26 @@ Error EmitterExplicitT<Assembler>::mov(Gp const & o0, Mem const & o1)
 Error EmitterExplicitT<Assembler>::mov(Gp const & o0, Imm const & o1)
 {
     X86BufferWriter writer(_emitter);
-    int32_t immValue = (uint32_t)o1.value();
-    CPU_Message("mov %s, %Xh", x86_Name(o0), immValue);
+
+    if (o0.size() == 8)
+    {
+        int64_t immValue = o1.value();
+        if (Support::isInt32(immValue))
+        {
+            CPU_Message("mov %s, %Xh", x86_Name(o0), (uint32_t)immValue);
+            writer.emit8(0x48 | ((o0.id() & 0x08) >> 3));
+            writer.emit16(0xC0C7 | ((o0.id() & 7) << 8));
+            writer.emit32((uint32_t)immValue);
+            return kErrorOk;
+        }
+        __debugbreak();
+        return kErrorInvalidRegType;
+    }
 
     if (o0.size() == 4)
     {
+        int32_t immValue = (uint32_t)o1.value();
+        CPU_Message("mov %s, %Xh", x86_Name(o0), immValue);
         if (Support::isInt8(immValue))
         {
             __debugbreak();
@@ -804,8 +878,19 @@ Error EmitterExplicitT<Assembler>::or_(Mem const & /*o0*/, Imm const & /*o1*/)
 
 Error EmitterExplicitT<Assembler>::pop(Gp const & o0)
 {
-    CPU_Message("pop %s", x86_Name(o0));
     X86BufferWriter writer(_emitter);
+    CPU_Message("pop %s", x86_Name(o0));
+
+    if (o0.size() == 8)
+    {
+        if ((o0.id() & ~7) != 0)
+        {
+            __debugbreak();
+            return kErrorInvalidRegType;
+        }
+        writer.emit8(0x58 | (o0.id() & 7));
+        return kErrorOk;
+    }
 
     if (o0.size() == 4)
     {
@@ -831,7 +916,12 @@ Error EmitterExplicitT<Assembler>::push(Gp const & o0)
 
     if (o0.size() == 4 || o0.size() == 8)
     {
-        writer.emit8(0x50 | o0.id());
+        if ((o0.id() & ~7) != 0)
+        {
+            __debugbreak();
+            return kErrorInvalidRegType;
+        }
+        writer.emit8(0x50 | (o0.id() & 7));
         return kErrorOk;
     }
     __debugbreak();
@@ -1047,10 +1137,38 @@ Error EmitterExplicitT<Assembler>::sub(Gp const & /*o0*/, Mem const & /*o0*/)
     return 0;
 }
 
-Error EmitterExplicitT<Assembler>::sub(Gp const & /*o0*/, Imm const & /*o1*/)
+Error EmitterExplicitT<Assembler>::sub(Gp const & o0, Imm const & o1)
 {
+    X86BufferWriter writer(_emitter);
+    if (o0.size() == 8)
+    {
+        int64_t immValue = o1.value();
+        if (!Support::isInt32(immValue))
+        {
+            __debugbreak();
+            return kErrorInvalidRegType;
+        }
+        if ((o0.id() & ~7) != 0)
+        {
+            __debugbreak();
+            return kErrorInvalidRegType;
+        }
+        CPU_Message("sub %s, 0x%X", x86_Name(o0), (uint32_t)immValue);
+        writer.emit8(0x48);
+        if (Support::isInt8(immValue))
+        {
+            writer.emit16(0xE883 | ((o0.id() & 7) << 8));
+            writer.emit8((uint8_t)immValue);
+        }
+        else
+        {
+            writer.emit16(0xE881 | ((o0.id() & 7) << 8));
+            writer.emit32((uint32_t)immValue);
+        }
+        return kErrorOk;
+    }
     __debugbreak();
-    return 0;
+    return kErrorInvalidRegType;
 }
 
 Error EmitterExplicitT<Assembler>::sub(Mem const & o0, Imm const & o1)
