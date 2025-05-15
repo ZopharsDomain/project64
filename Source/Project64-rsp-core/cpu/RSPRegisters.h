@@ -139,7 +139,6 @@ public:
     RSPFlag VCE;
 };
 
-
 #if defined(__i386__) || defined(_M_IX86)
 extern const char * x86_Strings[8];
 #define x86_Name(Reg) (x86_Strings[(Reg)])
