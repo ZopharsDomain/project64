@@ -707,7 +707,7 @@ output:   none
 *******************************************************************/
 void CALL GetDllInfo(PLUGIN_INFO * PluginInfo)
 {
-    PluginInfo->Version = 0x0104;     // Set to 0x0104
+    PluginInfo->Version = VIDEO_SPECS_VERSION;     // Set to 0x0104
     PluginInfo->Type = PLUGIN_TYPE_VIDEO;  // Set to PLUGIN_TYPE_GFX
 #ifdef _DEBUG
     sprintf(PluginInfo->Name, "Project64 Video Plugin (Debug): %s", VER_FILE_VERSION_STR);

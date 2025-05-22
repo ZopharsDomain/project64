@@ -38,6 +38,14 @@ enum PLUGIN_TYPE
     PLUGIN_TYPE_CONTROLLER = 4,
 };
 
+enum
+{
+    VIDEO_SPECS_VERSION = 0x0105,
+    AUDIO_SPECS_VERSION = 0x0101,
+    RSP_SPECS_VERSION = 0x0103,
+    CONTROLLER_SPECS_VERSION = 0x0102
+};
+
 typedef struct
 {
     uint16_t Version;    // Should be set plugin spec version eg VIDEO_SPECS_VERSION

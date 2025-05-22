@@ -325,6 +325,10 @@ bool CPlugin::ValidPluginVersion(PLUGIN_INFO & PluginInfo)
         {
             return true;
         }
+        if (PluginInfo.Version == 0x0105)
+        {
+            return true;
+        }
         break;
     case PLUGIN_TYPE_AUDIO:
         if (PluginInfo.Version == 0x0101)

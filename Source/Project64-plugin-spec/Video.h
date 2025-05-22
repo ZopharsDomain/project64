@@ -17,7 +17,19 @@ typedef struct
     uint8_t * DMEM;
     uint8_t * IMEM;
 
+    uint32_t RDRAM_SIZE;
+
     uint32_t * MI_INTR_REG;
+
+    uint32_t * SP_MEM_ADDR_REG;
+    uint32_t * SP_DRAM_ADDR_REG;
+    uint32_t * SP_RD_LEN_REG;
+    uint32_t * SP_WR_LEN_REG;
+    uint32_t * SP_STATUS_REG;
+    uint32_t * SP_DMA_FULL_REG;
+    uint32_t * SP_DMA_BUSY_REG;
+    uint32_t * SP_PC_REG;
+    uint32_t * SP_SEMAPHORE_REG;
 
     uint32_t * DPC_START_REG;
     uint32_t * DPC_END_REG;

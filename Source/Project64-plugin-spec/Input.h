@@ -1,11 +1,6 @@
 #pragma once
 #include "Base.h"
 
-enum 
-{
-    CONTROLLER_SPECS_VERSION = 0x0102
-};
-
 enum PluginType
 {
     PLUGIN_NONE = 1,
