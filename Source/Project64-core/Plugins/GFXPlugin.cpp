@@ -399,7 +399,7 @@ bool CGfxPlugin::Initiate_1_5(CN64System * System, RenderWindow * Window)
         return false;
     }
 
-    GFX_INFO Info = { 0 };
+    GFX_INFO Info = {0};
 
     Info.MemoryBswaped = true;
 #if defined(ANDROID) || defined(__ANDROID__)
