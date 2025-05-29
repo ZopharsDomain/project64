@@ -1300,13 +1300,6 @@ void CMainMenu::FillOutMenu(HMENU hMenu)
             DebugMenu.push_back(Item);
         }
 
-        // Debug - RDP
-        if (g_Plugins && g_Plugins->Gfx() != nullptr && IsMenu((HMENU)g_Plugins->Gfx()->GetDebugMenu()))
-        {
-            Item.Reset(ID_PLUGIN_MENU, EMPTY_STRING, EMPTY_STDSTR, g_Plugins->Gfx()->GetDebugMenu(), L"&RDP");
-            DebugMenu.push_back(Item);
-        }
-
         // Notification menu
         Item.Reset(ID_DEBUG_SHOW_PIF_ERRORS, EMPTY_STRING, EMPTY_STDSTR, nullptr, L"On PIF errors");
         if (g_Settings->LoadBool(Debugger_ShowPifErrors))
@@ -1452,10 +1445,6 @@ void CMainMenu::ResetMenu(void)
         m_Gui->SetWindowMenu(this);
 
         WriteTrace(TraceUserInterface, TraceDebug, "Remove plugin menu");
-        if (g_Plugins->Gfx() != nullptr && IsMenu((HMENU)g_Plugins->Gfx()->GetDebugMenu()))
-        {
-            RemoveMenu((HMENU)OldMenuHandle, (UINT)((UINT_PTR)g_Plugins->Gfx()->GetDebugMenu()), MF_BYCOMMAND);
-        }
         if (g_Plugins->RSP() != nullptr && IsMenu((HMENU)g_Plugins->RSP()->GetDebugMenu()))
         {
             RemoveMenu((HMENU)OldMenuHandle, (UINT)((UINT_PTR)g_Plugins->RSP()->GetDebugMenu()), MF_BYCOMMAND);

@@ -22,11 +22,8 @@ CGfxPlugin::CGfxPlugin() :
     ViWidthChanged(nullptr),
     SoftReset(nullptr),
     GetRomBrowserMenu(nullptr),
-    OnRomBrowserMenuItem(nullptr),
-    GetDebugInfo(nullptr),
-    InitiateDebugger(nullptr)
+    OnRomBrowserMenuItem(nullptr)
 {
-    memset(&m_GFXDebug, 0, sizeof(m_GFXDebug));
 }
 
 CGfxPlugin::~CGfxPlugin()
@@ -109,8 +106,6 @@ bool CGfxPlugin::LoadFunctions(void)
         LoadFunction(ProcessRDPList);
         LoadFunction(CaptureScreen);
         LoadFunction(ShowCFB);
-        LoadFunction(GetDebugInfo);
-        _LoadFunction("InitiateGFXDebugger", InitiateDebugger);
 
         if (ProcessRDPList == nullptr)
         {
@@ -136,11 +131,6 @@ bool CGfxPlugin::LoadFunctions(void)
             UnloadPlugin();
             return false;
         }
-    }
-
-    if (GetDebugInfo != nullptr)
-    {
-        GetDebugInfo(&m_GFXDebug);
     }
     return true;
 }
@@ -522,13 +512,10 @@ void CGfxPlugin::UnloadPluginDetails(void)
         DynamicLibraryClose(m_LibHandle);
         m_LibHandle = nullptr;
     }
-    memset(&m_GFXDebug, 0, sizeof(m_GFXDebug));
 
     ChangeWindow = nullptr;
-    GetDebugInfo = nullptr;
     DrawScreen = nullptr;
     DrawStatus = nullptr;
-    InitiateDebugger = nullptr;
     MoveScreen = nullptr;
     ProcessDList = nullptr;
     ProcessRDPList = nullptr;
@@ -539,14 +526,6 @@ void CGfxPlugin::UnloadPluginDetails(void)
     GetRomBrowserMenu = nullptr;
     OnRomBrowserMenuItem = nullptr;
     WriteTrace(TraceVideoPlugin, TraceDebug, "Done");
-}
-
-void CGfxPlugin::ProcessMenuItem(int32_t id)
-{
-    if (m_GFXDebug.ProcessMenuItem)
-    {
-        m_GFXDebug.ProcessMenuItem(id);
-    }
 }
 
 #ifdef ANDROID

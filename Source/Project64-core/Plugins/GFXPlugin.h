@@ -3,41 +3,6 @@
 
 class CGfxPlugin : public CPlugin
 {
-    typedef struct
-    {
-        // Menu
-        // Items should have an ID between 5101 and 5200
-        void * hGFXMenu;
-        void(CALL * ProcessMenuItem)(int32_t ID);
-
-        // Breakpoints
-        int32_t UseBPoints;
-        char BPPanelName[20];
-        void(CALL * Add_BPoint)(void);
-        void(CALL * CreateBPPanel)(void * hDlg, void * rcBox);
-        void(CALL * HideBPPanel)(void);
-        void(CALL * PaintBPPanel)(void * ps);
-        void(CALL * ShowBPPanel)(void);
-        void(CALL * RefreshBpoints)(void * hList);
-        void(CALL * RemoveBpoint)(void * hList, int32_t index);
-        void(CALL * RemoveAllBpoint)(void);
-
-        // GFX command window
-        void(CALL * Enter_GFX_Commands_Window)(void);
-    } GFXDEBUG_INFO;
-
-    typedef struct
-    {
-        void(CALL * UpdateBreakPoints)(void);
-        void(CALL * UpdateMemory)(void);
-        void(CALL * UpdateR4300iRegisters)(void);
-        void(CALL * Enter_BPoint_Window)(void);
-        void(CALL * Enter_R4300i_Commands_Window)(void);
-        void(CALL * Enter_R4300i_Register_Window)(void);
-        void(CALL * Enter_RSP_Commands_Window)(void);
-        void(CALL * Enter_Memory_Window)(void);
-    } DEBUG_INFO;
-
 public:
     CGfxPlugin(void);
     ~CGfxPlugin();
@@ -66,12 +31,6 @@ public:
     void *(CALL * GetRomBrowserMenu)(void); // Items should have an ID between 4101 and 4200
     void(CALL * OnRomBrowserMenuItem)(int32_t MenuID, void * hParent, uint8_t * HEADER);
 
-    void * GetDebugMenu(void)
-    {
-        return m_GFXDebug.hGFXMenu;
-    }
-    void ProcessMenuItem(int32_t id);
-
 private:
     CGfxPlugin(const CGfxPlugin &);
     CGfxPlugin & operator=(const CGfxPlugin &);
@@ -92,11 +51,6 @@ private:
     void UnloadPluginDetails(void);
     bool Initiate_1_4(CN64System * System, RenderWindow * Window);
     bool Initiate_1_5(CN64System * System, RenderWindow * Window);
-
-    GFXDEBUG_INFO m_GFXDebug;
-
-    void(CALL * GetDebugInfo)(GFXDEBUG_INFO * GFXDebugInfo);
-    void(CALL * InitiateDebugger)(DEBUG_INFO DebugInfo);
 
 #ifdef ANDROID
     static void SwapBuffers(void);

@@ -1133,15 +1133,6 @@ LRESULT CALLBACK CMainGui::MainGui_Proc(HWND hWnd, DWORD uMsg, WPARAM wParam, LP
                         g_Plugins->RSP()->ProcessMenuItem(LOWORD(wParam));
                     }
                 }
-                else if (LOWORD(wParam) > 5100 && LOWORD(wParam) <= 5200)
-                {
-                    if (g_Plugins->Gfx())
-                    {
-                        WriteTrace(TraceVideoPlugin, TraceDebug, "Starting");
-                        g_Plugins->Gfx()->ProcessMenuItem(LOWORD(wParam));
-                        WriteTrace(TraceVideoPlugin, TraceDebug, "Done");
-                    }
-                }
                 else if (LOWORD(wParam) > 5200 && LOWORD(wParam) <= 5300)
                 {
                     if (g_Plugins->Gfx() && g_Plugins->Gfx()->OnRomBrowserMenuItem != nullptr)
