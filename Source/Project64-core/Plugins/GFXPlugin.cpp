@@ -53,7 +53,11 @@ bool CGfxPlugin::LoadFunctions(void)
 #endif
 
     // Version 0x104 functions
-    _LoadFunction("DrawFullScreenStatus", DrawStatus);
+    LoadFunction(DrawStatus);
+    if (DrawStatus == nullptr)
+    {
+        _LoadFunction("DrawFullScreenStatus", DrawStatus); // For Jabo D3D8 1.7
+    }
 
     // ROM browser
     LoadFunction(GetRomBrowserMenu);
