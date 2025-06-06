@@ -131,6 +131,26 @@ Output: none
 EXPORT void CALL MoveScreen(int xpos, int ypos);
 
 /*
+Function: OnRomBrowserMenuItem
+Purpose: Callback when the ROM Browser menu supplied by the
+caller is invoked
+Input: MenuID - ID of the selected menu item
+hParent - handle to the parent window
+HEADER - pointer to the ROM header
+Output: none
+*/
+EXPORT void (CALL * OnRomBrowserMenuItem)(int32_t MenuID, void * hParent, uint8_t * HEADER);
+
+/*
+Function: GetRomBrowserMenu
+Purpose: Called when the ROM Browser right clicks on a game to be able to show a menu
+         Items should have an ID between 4101 and 4200
+Input: none
+Output: HMENU - menu to be shown
+*/
+EXPORT void * (CALL * GetRomBrowserMenu)(void);
+
+/*
 Function: ProcessDList
 Purpose: This function is called when there is a Dlist to be
 processed. (High level GFX list)
@@ -157,6 +177,15 @@ Input: none
 Output: none
 */
 EXPORT void CALL ShowCFB(void);
+
+/*
+Function: SoftReset
+Purpose: This function is called to notify the plugin that a
+soft reset has occurred.
+Input: none
+Output: none
+*/
+EXPORT void CALL SoftReset(void);
 
 /*
 Function: UpdateScreen
