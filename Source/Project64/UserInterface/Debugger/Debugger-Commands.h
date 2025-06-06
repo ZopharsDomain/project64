@@ -2,6 +2,7 @@
 
 #include "Breakpoints.h"
 #include "Debugger-AddBreakpoint.h"
+#include "Debugger-CopyCommands.h"
 #include "Debugger-RegisterTabs.h"
 #include "OpInfo.h"
 
