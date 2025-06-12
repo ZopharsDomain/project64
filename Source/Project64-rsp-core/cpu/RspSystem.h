@@ -17,6 +17,7 @@ class CRSPSystem :
     friend class RSPOp;
     friend class CRSPRecompilerOps;
     friend class CRSPRecompiler;
+    friend class RspCodeBlock;
     friend class CHleTask;
     friend class RSPDebuggerUI;
     friend class CRDPLog;

@@ -8,9 +8,16 @@ class RSPInstruction
 public:
     RSPInstruction(uint32_t Address, uint32_t Instruction);
     RSPInstruction & operator=(const RSPInstruction &);
+    RSPInstruction(const RSPInstruction & e);
 
     uint32_t Address() const;
+    uint32_t ConditionalBranchTarget() const;
+    uint32_t StaticCallTarget() const;
     bool IsBranch() const;
+    bool IsJumpReturn() const;
+    bool IsRegisterJump() const;
+    bool IsStaticCall() const;
+    bool IsConditionalBranch() const;
     bool IsNop() const;
     const char * Name() const;
     const char * Param() const;
@@ -19,7 +26,6 @@ public:
 
 private:
     RSPInstruction(void);
-    RSPInstruction(const RSPInstruction &);
 
     void DecodeName(void) const;
     void DecodeSpecialName(void) const;

@@ -20,9 +20,50 @@ RSPInstruction & RSPInstruction::operator=(const RSPInstruction & e)
     return *this;
 }
 
+RSPInstruction::RSPInstruction(const RSPInstruction & e) :
+    m_Address(e.m_Address)
+{
+    m_Name[0] = '\0';
+    m_Param[0] = '\0';
+    m_Instruction.Value = e.m_Instruction.Value;
+}
+
 uint32_t RSPInstruction::Address() const
 {
     return m_Address;
+}
+
+uint32_t RSPInstruction::ConditionalBranchTarget() const
+{
+    if (!IsConditionalBranch())
+    {
+        return 0;
+    }
+    return (m_Address + 4 + ((short)m_Instruction.offset << 2)) & 0x1FFC;
+}
+
+uint32_t RSPInstruction::StaticCallTarget() const
+{
+    if (!IsStaticCall())
+    {
+        return 0;
+    }
+    return 0x1000 | (m_Instruction.target << 2) & 0xFFC;
+}
+
+bool RSPInstruction::IsJumpReturn() const
+{
+    return IsRegisterJump() && m_Instruction.rs == 31;
+}
+
+bool RSPInstruction::IsRegisterJump() const
+{
+    return m_Instruction.op == RSP_SPECIAL && (m_Instruction.funct == RSP_SPECIAL_JR || m_Instruction.funct == RSP_SPECIAL_JALR);
+}
+
+bool RSPInstruction::IsStaticCall() const
+{
+    return m_Instruction.op == RSP_JAL;
 }
 
 bool RSPInstruction::IsBranch() const
@@ -74,6 +115,83 @@ bool RSPInstruction::IsBranch() const
         break;
     case RSP_J:
     case RSP_JAL:
+    case RSP_BEQ:
+    case RSP_BNE:
+    case RSP_BLEZ:
+    case RSP_BGTZ:
+        return true;
+    case RSP_ADDI:
+    case RSP_ADDIU:
+    case RSP_SLTI:
+    case RSP_SLTIU:
+    case RSP_ANDI:
+    case RSP_ORI:
+    case RSP_XORI:
+    case RSP_LUI:
+    case RSP_CP0:
+    case RSP_CP2:
+    case RSP_LB:
+    case RSP_LH:
+    case RSP_LW:
+    case RSP_LBU:
+    case RSP_LHU:
+    case RSP_SB:
+    case RSP_SH:
+    case RSP_SW:
+    case RSP_LC2:
+    case RSP_SC2:
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+bool RSPInstruction::IsConditionalBranch() const
+{
+    switch (m_Instruction.op)
+    {
+    case RSP_REGIMM:
+        switch (m_Instruction.rt)
+        {
+        case RSP_REGIMM_BLTZ:
+        case RSP_REGIMM_BGEZ:
+        case RSP_REGIMM_BLTZAL:
+        case RSP_REGIMM_BGEZAL:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case RSP_SPECIAL:
+        switch (m_Instruction.funct)
+        {
+        case RSP_SPECIAL_SLL:
+        case RSP_SPECIAL_SRL:
+        case RSP_SPECIAL_SRA:
+        case RSP_SPECIAL_SLLV:
+        case RSP_SPECIAL_SRLV:
+        case RSP_SPECIAL_SRAV:
+        case RSP_SPECIAL_ADD:
+        case RSP_SPECIAL_ADDU:
+        case RSP_SPECIAL_SUB:
+        case RSP_SPECIAL_SUBU:
+        case RSP_SPECIAL_AND:
+        case RSP_SPECIAL_OR:
+        case RSP_SPECIAL_XOR:
+        case RSP_SPECIAL_NOR:
+        case RSP_SPECIAL_SLT:
+        case RSP_SPECIAL_SLTU:
+        case RSP_SPECIAL_BREAK:
+        case RSP_SPECIAL_JALR:
+        case RSP_SPECIAL_JR:
+        default:
+            break;
+        }
+        break;
+    case RSP_J:
+    case RSP_JAL:
+        break;
     case RSP_BEQ:
     case RSP_BNE:
     case RSP_BLEZ:
