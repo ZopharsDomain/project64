@@ -53,13 +53,13 @@ void RspCodeBlock::Analyze(void)
             break;
         }
         if ((m_CodeType == RspCodeType_SUBROUTINE && Instruction.IsJumpReturn()) ||
-           (m_CodeType == RspCodeType_TASK && Instruction.Value() == J_0x1118))
+            (m_CodeType == RspCodeType_TASK && Instruction.Value() == J_0x1118))
         {
             bool JumpBeyond = false;
             for (Addresses::iterator itr = m_BranchTargets.begin(); itr != m_BranchTargets.end(); itr++)
             {
                 if (*itr > Address)
-                { 
+                {
                     JumpBeyond = true;
                     break;
                 }

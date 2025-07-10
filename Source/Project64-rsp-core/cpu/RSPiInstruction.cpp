@@ -1,10 +1,15 @@
 #include "RSPInstruction.h"
 #include "RSPRegisters.h"
 #include <Common/StdString.h>
+#include <Project64-rsp-core/RSPInfo.h>
 #include <Settings/Settings.h>
 
 RSPInstruction::RSPInstruction(uint32_t Address, uint32_t Instruction) :
-    m_Address(Address)
+    m_Address(Address),
+    m_Flag(RSPInstructionFlag::Unknown),
+    m_DestReg(UNUSED_OPERAND),
+    m_SourceReg0(UNUSED_OPERAND),
+    m_SourceReg1(UNUSED_OPERAND)
 {
     m_Name[0] = '\0';
     m_Param[0] = '\0';
@@ -17,15 +22,23 @@ RSPInstruction & RSPInstruction::operator=(const RSPInstruction & e)
     m_Instruction.Value = e.m_Instruction.Value;
     m_Name[0] = '\0';
     m_Param[0] = '\0';
+    m_Flag = RSPInstructionFlag::Unknown;
+    m_DestReg = UNUSED_OPERAND;
+    m_SourceReg0 = UNUSED_OPERAND;
+    m_SourceReg1 = UNUSED_OPERAND;
     return *this;
 }
 
 RSPInstruction::RSPInstruction(const RSPInstruction & e) :
-    m_Address(e.m_Address)
+    m_Address(e.m_Address),
+    m_Flag(RSPInstructionFlag::Unknown),
+    m_DestReg(UNUSED_OPERAND),
+    m_SourceReg0(UNUSED_OPERAND),
+    m_SourceReg1(UNUSED_OPERAND)
 {
+    m_Instruction.Value = e.m_Instruction.Value;
     m_Name[0] = '\0';
     m_Param[0] = '\0';
-    m_Instruction.Value = e.m_Instruction.Value;
 }
 
 uint32_t RSPInstruction::Address() const
@@ -64,6 +77,44 @@ bool RSPInstruction::IsRegisterJump() const
 bool RSPInstruction::IsStaticCall() const
 {
     return m_Instruction.op == RSP_JAL;
+}
+
+bool RSPInstruction::DelaySlotAffectBranch() const
+{
+    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
+    {
+        AnalyzeInstruction();
+    }
+
+    uint32_t DelayPC = (m_Address + 4) & 0x1FFC;
+    RSPInstruction DelayInstruction(DelayPC, *(uint32_t *)(RSPInfo.IMEM + (DelayPC & 0xFFC)));
+    if (DelayInstruction.IsNop())
+    {
+        return false;
+    }
+
+    if (DelayInstruction.Flag() == RSPInstructionFlag::MF)
+    {
+        return true;
+    }
+
+    if (DelayInstruction.Flag() == RSPInstructionFlag::Vector ||
+        DelayInstruction.Flag() == RSPInstructionFlag::VectorSetAccum ||
+        DelayInstruction.Flag() == RSPInstructionFlag::VectorUseAccum ||
+        DelayInstruction.Flag() == RSPInstructionFlag::VectorLoad ||
+        DelayInstruction.Flag() == RSPInstructionFlag::VectorStore)
+    {
+        return true;
+    }
+    if (SourceReg0() == DelayInstruction.DestReg())
+    {
+        return true;
+    }
+    if (SourceReg1() == DelayInstruction.DestReg())
+    {
+        return true;
+    }
+    return false;
 }
 
 bool RSPInstruction::IsBranch() const
@@ -255,6 +306,357 @@ std::string RSPInstruction::NameAndParam() const
 uint32_t RSPInstruction::Value() const
 {
     return m_Instruction.Value;
+}
+
+RSPInstructionFlag RSPInstruction::Flag() const
+{
+    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
+    {
+        AnalyzeInstruction();
+    }
+    return m_Flag;
+}
+
+uint32_t RSPInstruction::DestReg() const
+{
+    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
+    {
+        AnalyzeInstruction();
+    }
+    return m_DestReg;
+}
+
+uint32_t RSPInstruction::SourceReg0() const
+{
+    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
+    {
+        AnalyzeInstruction();
+    }
+    return m_SourceReg0;
+}
+
+uint32_t RSPInstruction::SourceReg1() const
+{
+    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
+    {
+        AnalyzeInstruction();
+    }
+    return m_SourceReg1;
+}
+
+void RSPInstruction::AnalyzeInstruction() const
+{
+    switch (m_Instruction.op)
+    {
+    case RSP_REGIMM:
+        switch (m_Instruction.rt)
+        {
+        case RSP_REGIMM_BLTZ:
+        case RSP_REGIMM_BLTZAL:
+        case RSP_REGIMM_BGEZ:
+        case RSP_REGIMM_BGEZAL:
+            m_Flag = RSPInstructionFlag::Branch;
+            m_SourceReg0 = m_Instruction.rs;
+            m_SourceReg1 = UNUSED_OPERAND;
+            break;
+
+        default:
+            m_Flag = RSPInstructionFlag::InvalidOpcode;
+            break;
+        }
+        break;
+    case RSP_SPECIAL:
+        switch (m_Instruction.funct)
+        {
+        case RSP_SPECIAL_BREAK:
+            m_DestReg = UNUSED_OPERAND;
+            m_SourceReg0 = UNUSED_OPERAND;
+            m_SourceReg1 = UNUSED_OPERAND;
+            m_Flag = RSPInstructionFlag::Break;
+            break;
+        case RSP_SPECIAL_SLL:
+        case RSP_SPECIAL_SRL:
+        case RSP_SPECIAL_SRA:
+            m_DestReg = m_Instruction.rd;
+            m_SourceReg0 = m_Instruction.rt;
+            m_SourceReg1 = UNUSED_OPERAND;
+            m_Flag = RSPInstructionFlag::GPROperation;
+            break;
+        case RSP_SPECIAL_SLLV:
+        case RSP_SPECIAL_SRLV:
+        case RSP_SPECIAL_SRAV:
+        case RSP_SPECIAL_ADD:
+        case RSP_SPECIAL_ADDU:
+        case RSP_SPECIAL_SUB:
+        case RSP_SPECIAL_SUBU:
+        case RSP_SPECIAL_AND:
+        case RSP_SPECIAL_OR:
+        case RSP_SPECIAL_XOR:
+        case RSP_SPECIAL_NOR:
+        case RSP_SPECIAL_SLT:
+        case RSP_SPECIAL_SLTU:
+            m_DestReg = m_Instruction.rd;
+            m_SourceReg0 = m_Instruction.rs;
+            m_SourceReg1 = m_Instruction.rt;
+            m_Flag = RSPInstructionFlag::GPROperation;
+            break;
+
+        case RSP_SPECIAL_JR:
+            m_Flag = RSPInstructionFlag::Jump;
+            m_SourceReg0 = UNUSED_OPERAND;
+            m_SourceReg1 = UNUSED_OPERAND;
+            break;
+
+        default:
+            m_Flag = RSPInstructionFlag::InvalidOpcode;
+            break;
+        }
+        break;
+    case RSP_J:
+    case RSP_JAL:
+        m_Flag = RSPInstructionFlag::Jump;
+        m_SourceReg0 = UNUSED_OPERAND;
+        m_SourceReg1 = UNUSED_OPERAND;
+        break;
+    case RSP_BEQ:
+    case RSP_BNE:
+        m_Flag = RSPInstructionFlag::Branch;
+        m_SourceReg0 = m_Instruction.rt;
+        m_SourceReg1 = m_Instruction.rs;
+        break;
+    case RSP_BLEZ:
+    case RSP_BGTZ:
+        m_Flag = RSPInstructionFlag::Branch;
+        m_SourceReg0 = m_Instruction.rs;
+        m_SourceReg1 = UNUSED_OPERAND;
+        break;
+    case RSP_ADDI:
+    case RSP_ADDIU:
+    case RSP_SLTI:
+    case RSP_SLTIU:
+    case RSP_ANDI:
+    case RSP_ORI:
+    case RSP_XORI:
+        m_DestReg = m_Instruction.rt;
+        m_SourceReg0 = m_Instruction.rs;
+        m_SourceReg1 = UNUSED_OPERAND;
+        m_Flag = RSPInstructionFlag::GPROperation;
+        break;
+    case RSP_LUI:
+        m_DestReg = m_Instruction.rt;
+        m_SourceReg0 = UNUSED_OPERAND;
+        m_SourceReg1 = UNUSED_OPERAND;
+        m_Flag = RSPInstructionFlag::GPROperation;
+        break;
+    case RSP_CP0:
+        switch (m_Instruction.rs)
+        {
+        case RSP_COP0_MF:
+            m_DestReg = m_Instruction.rt;
+            m_SourceReg0 = UNUSED_OPERAND;
+            m_SourceReg1 = UNUSED_OPERAND;
+            m_Flag = RSPInstructionFlag::MF;
+            break;
+
+        case RSP_COP0_MT:
+            m_SourceReg0 = m_Instruction.rt;
+            m_SourceReg1 = UNUSED_OPERAND;
+            m_Flag = RSPInstructionFlag::MT;
+            break;
+        }
+        break;
+    case RSP_CP2:
+        if ((m_Instruction.rs & 0x10) != 0)
+        {
+            switch (m_Instruction.funct)
+            {
+            case RSP_VECTOR_VNOP:
+                m_DestReg = UNUSED_OPERAND;
+                m_SourceReg0 = UNUSED_OPERAND;
+                m_SourceReg1 = UNUSED_OPERAND;
+                m_Flag = RSPInstructionFlag::Vector;
+                break;
+            case RSP_VECTOR_VMULF:
+            case RSP_VECTOR_VMULU:
+            case RSP_VECTOR_VMUDL:
+            case RSP_VECTOR_VMUDM:
+            case RSP_VECTOR_VMUDN:
+            case RSP_VECTOR_VMUDH:
+            case RSP_VECTOR_VABS:
+            case RSP_VECTOR_VAND:
+            case RSP_VECTOR_VOR:
+            case RSP_VECTOR_VXOR:
+            case RSP_VECTOR_VNAND:
+            case RSP_VECTOR_VNOR:
+            case RSP_VECTOR_VNXOR:
+                m_DestReg = m_Instruction.sa;
+                m_SourceReg0 = m_Instruction.rd;
+                m_SourceReg1 = m_Instruction.rt;
+                m_Flag = RSPInstructionFlag::VectorSetAccum;
+                break;
+            case RSP_VECTOR_VMACF:
+            case RSP_VECTOR_VMACU:
+            case RSP_VECTOR_VMADL:
+            case RSP_VECTOR_VMADM:
+            case RSP_VECTOR_VMADN:
+            case RSP_VECTOR_VMADH:
+                m_DestReg = m_Instruction.sa;
+                m_SourceReg0 = m_Instruction.rd;
+                m_SourceReg1 = m_Instruction.rt;
+                m_Flag = RSPInstructionFlag::VectorUseAccum;
+                break;
+            case RSP_VECTOR_VADD:
+            case RSP_VECTOR_VADDC:
+            case RSP_VECTOR_VSUB:
+            case RSP_VECTOR_VSUBC:
+            case RSP_VECTOR_VCR:
+            case RSP_VECTOR_VCH:
+            case RSP_VECTOR_VCL:
+            case RSP_VECTOR_VLT:
+            case RSP_VECTOR_VEQ:
+            case RSP_VECTOR_VGE:
+            case RSP_VECTOR_VNE:
+                m_DestReg = m_Instruction.sa;
+                m_SourceReg0 = m_Instruction.rd;
+                m_SourceReg1 = m_Instruction.rt;
+                m_Flag = RSPInstructionFlag::VectorSetAccum;
+                break;
+            case RSP_VECTOR_VMOV:
+            case RSP_VECTOR_VRCP:
+            case RSP_VECTOR_VRCPL:
+            case RSP_VECTOR_VRCPH:
+            case RSP_VECTOR_VRSQL:
+            case RSP_VECTOR_VRSQH:
+                m_DestReg = m_Instruction.sa;
+                m_SourceReg0 = m_Instruction.rt;
+                m_SourceReg1 = UNUSED_OPERAND;
+                m_Flag = RSPInstructionFlag::VectorSetAccum;
+                break;
+            case RSP_VECTOR_VMRG:
+                m_DestReg = m_Instruction.sa;
+                m_SourceReg0 = m_Instruction.rt;
+                m_SourceReg1 = m_Instruction.rd;
+                m_Flag = RSPInstructionFlag::VectorSetAccum;
+                break;
+            case RSP_VECTOR_VSAW:
+                m_DestReg = m_Instruction.sa;
+                m_SourceReg0 = UNUSED_OPERAND;
+                m_SourceReg1 = UNUSED_OPERAND;
+                m_Flag = RSPInstructionFlag::VectorUseAccum;
+                break;
+            default:
+                m_Flag = RSPInstructionFlag::InvalidOpcode;
+                break;
+            }
+        }
+        else
+        {
+            switch (m_Instruction.rs)
+            {
+            case RSP_COP2_CT:
+                m_SourceReg0 = m_Instruction.rt;
+                m_SourceReg1 = UNUSED_OPERAND;
+                m_Flag = RSPInstructionFlag::CT;
+                break;
+            case RSP_COP2_CF:
+                m_DestReg = m_Instruction.rt;
+                m_SourceReg0 = UNUSED_OPERAND;
+                m_SourceReg1 = UNUSED_OPERAND;
+                m_Flag = RSPInstructionFlag::CF;
+                break;
+                // RD is always the vector register, RT is always GPR
+            case RSP_COP2_MT:
+                m_DestReg = m_Instruction.rd;
+                m_SourceReg0 = m_Instruction.rt;
+                m_SourceReg1 = UNUSED_OPERAND;
+                m_Flag = RSPInstructionFlag::Vector;
+                break;
+            case RSP_COP2_MF:
+                m_DestReg = m_Instruction.rt;
+                m_SourceReg0 = m_Instruction.rd;
+                m_SourceReg1 = UNUSED_OPERAND;
+                m_Flag = RSPInstructionFlag::Vector;
+                break;
+            default:
+                m_Flag = RSPInstructionFlag::InvalidOpcode;
+                break;
+            }
+        }
+        break;
+    case RSP_LB:
+    case RSP_LH:
+    case RSP_LW:
+    case RSP_LBU:
+    case RSP_LHU:
+        m_DestReg = m_Instruction.rt;
+        m_SourceReg0 = m_Instruction.base;
+        m_SourceReg1 = UNUSED_OPERAND;
+        m_Flag = RSPInstructionFlag::Load;
+        break;
+    case RSP_SB:
+    case RSP_SH:
+    case RSP_SW:
+        m_DestReg = m_Instruction.rt;
+        m_SourceReg1 = m_Instruction.base;
+        m_SourceReg1 = UNUSED_OPERAND;
+        m_Flag = RSPInstructionFlag::Store;
+        break;
+    case RSP_LC2:
+        switch (m_Instruction.rd)
+        {
+        case RSP_LSC2_BV:
+        case RSP_LSC2_SV:
+        case RSP_LSC2_DV:
+        case RSP_LSC2_RV:
+        case RSP_LSC2_QV:
+        case RSP_LSC2_LV:
+        case RSP_LSC2_UV:
+        case RSP_LSC2_PV:
+            m_DestReg = m_Instruction.rt;
+            m_SourceReg0 = m_Instruction.base;
+            m_SourceReg1 = UNUSED_OPERAND;
+            m_Flag = RSPInstructionFlag::VectorLoad;
+            break;
+        case RSP_LSC2_TV:
+            m_Flag = RSPInstructionFlag::InvalidOpcode;
+            ;
+            break;
+        default:
+            m_Flag = RSPInstructionFlag::InvalidOpcode;
+            break;
+        }
+        break;
+    case RSP_SC2:
+        switch (m_Instruction.rd)
+        {
+        case RSP_LSC2_BV:
+        case RSP_LSC2_SV:
+        case RSP_LSC2_LV:
+        case RSP_LSC2_DV:
+        case RSP_LSC2_QV:
+        case RSP_LSC2_RV:
+        case RSP_LSC2_PV:
+        case RSP_LSC2_UV:
+        case RSP_LSC2_HV:
+        case RSP_LSC2_FV:
+        case RSP_LSC2_WV:
+            m_DestReg = m_Instruction.rt;
+            m_SourceReg0 = m_Instruction.base;
+            m_SourceReg1 = UNUSED_OPERAND;
+            m_Flag = RSPInstructionFlag::VectorStore;
+            break;
+        case RSP_LSC2_TV:
+            m_Flag = RSPInstructionFlag::InvalidOpcode;
+            break;
+        default:
+            m_Flag = RSPInstructionFlag::InvalidOpcode;
+            break;
+        }
+        break;
+    default:
+        m_Flag = RSPInstructionFlag::InvalidOpcode;
+        break;
+    }
 }
 
 void RSPInstruction::DecodeName(void) const

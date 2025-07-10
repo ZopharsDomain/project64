@@ -1,13 +1,14 @@
 #pragma once
 #include <Project64-rsp-core/cpu/RSPInstruction.h>
 #include <memory>
-#include <stdint.h>
 #include <set>
+#include <stdint.h>
 #include <vector>
 
 class CRSPSystem;
 
-enum RspCodeType {
+enum RspCodeType
+{
     RspCodeType_TASK,
     RspCodeType_SUBROUTINE,
 };
@@ -15,7 +16,7 @@ enum RspCodeType {
 class RspCodeBlock
 {
     typedef std::vector<RSPInstruction> RSPInstructions;
-    typedef std::set<uint32_t> Addresses;    
+    typedef std::set<uint32_t> Addresses;
     typedef std::unique_ptr<RspCodeBlock> RspCodeBlockPtr;
     typedef std::vector<RspCodeBlockPtr> RspCodeBlocks;
 
