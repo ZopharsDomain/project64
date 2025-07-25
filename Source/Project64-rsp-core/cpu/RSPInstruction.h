@@ -10,6 +10,7 @@ enum class RSPInstructionFlag
     Break,
     GPROperation,
     Jump,
+    JumpRegister,
     Load,
     Store,
     MF,
@@ -38,8 +39,10 @@ public:
     uint32_t Address() const;
     uint32_t ConditionalBranchTarget() const;
     uint32_t StaticCallTarget() const;
+    uint32_t JumpTarget() const;
     bool DelaySlotAffectBranch() const;
     bool IsBranch() const;
+    bool IsJump() const;
     bool IsJumpReturn() const;
     bool IsRegisterJump() const;
     bool IsStaticCall() const;

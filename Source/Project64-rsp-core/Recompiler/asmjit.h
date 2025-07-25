@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(__amd64__) || defined(_M_X64)
-#define USE_ASMJITLITE
+//#define USE_ASMJITLITE
 #endif
 
 #ifdef USE_ASMJITLITE

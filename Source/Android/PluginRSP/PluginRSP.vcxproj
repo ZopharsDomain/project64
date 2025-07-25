@@ -45,11 +45,11 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\3rdParty\asmjit\asmjit.vcxproj">
+      <Project>{a72c9f08-ebb4-443d-9982-da21ae8b367d}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\3rdParty\zlib\zlib.vcxproj">
       <Project>{731bd205-2826-4631-b7af-117658e88dbc}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\AsmJitLite\AsmJitLite.vcxproj">
-      <Project>{236a7004-8169-4528-b829-7726737ffcf2}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\Common\Common.vcxproj">
       <Project>{b4a4b994-9111-42b1-93c2-6f1ca8bc4421}</Project>

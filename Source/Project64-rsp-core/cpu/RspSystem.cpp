@@ -327,7 +327,7 @@ void CRSPSystem::BasicSyncCheck(void)
     {
         SyncFailed = true;
     }
-    if (*m_SP_PC_REG != *m_SyncSystem->m_SP_PC_REG)
+    if ((*m_SP_PC_REG & 0xFFC) != (*m_SyncSystem->m_SP_PC_REG & 0xFFC))
     {
         SyncFailed = true;
     }

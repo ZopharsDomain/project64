@@ -55,6 +55,15 @@ uint32_t RSPInstruction::ConditionalBranchTarget() const
     return (m_Address + 4 + ((short)m_Instruction.offset << 2)) & 0x1FFC;
 }
 
+uint32_t RSPInstruction::JumpTarget() const
+{
+    if (!IsJump())
+    {
+        return 0;
+    }
+    return 0x1000 | (m_Instruction.target << 2) & 0xFFC;
+}
+
 uint32_t RSPInstruction::StaticCallTarget() const
 {
     if (!IsStaticCall())
@@ -64,6 +73,11 @@ uint32_t RSPInstruction::StaticCallTarget() const
     return 0x1000 | (m_Instruction.target << 2) & 0xFFC;
 }
 
+bool RSPInstruction::IsJump() const
+{
+    return m_Instruction.op == RSP_J;
+}
+
 bool RSPInstruction::IsJumpReturn() const
 {
     return IsRegisterJump() && m_Instruction.rs == 31;
@@ -71,6 +85,10 @@ bool RSPInstruction::IsJumpReturn() const
 
 bool RSPInstruction::IsRegisterJump() const
 {
+    if (m_Flag == RSPInstructionFlag::Unknown)
+    {
+        AnalyzeInstruction();
+    }
     return m_Instruction.op == RSP_SPECIAL && (m_Instruction.funct == RSP_SPECIAL_JR || m_Instruction.funct == RSP_SPECIAL_JALR);
 }
 
@@ -81,30 +99,11 @@ bool RSPInstruction::IsStaticCall() const
 
 bool RSPInstruction::DelaySlotAffectBranch() const
 {
-    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
-    {
-        AnalyzeInstruction();
-    }
-
     uint32_t DelayPC = (m_Address + 4) & 0x1FFC;
     RSPInstruction DelayInstruction(DelayPC, *(uint32_t *)(RSPInfo.IMEM + (DelayPC & 0xFFC)));
     if (DelayInstruction.IsNop())
     {
         return false;
-    }
-
-    if (DelayInstruction.Flag() == RSPInstructionFlag::MF)
-    {
-        return true;
-    }
-
-    if (DelayInstruction.Flag() == RSPInstructionFlag::Vector ||
-        DelayInstruction.Flag() == RSPInstructionFlag::VectorSetAccum ||
-        DelayInstruction.Flag() == RSPInstructionFlag::VectorUseAccum ||
-        DelayInstruction.Flag() == RSPInstructionFlag::VectorLoad ||
-        DelayInstruction.Flag() == RSPInstructionFlag::VectorStore)
-    {
-        return true;
     }
     if (SourceReg0() == DelayInstruction.DestReg())
     {
@@ -310,7 +309,7 @@ uint32_t RSPInstruction::Value() const
 
 RSPInstructionFlag RSPInstruction::Flag() const
 {
-    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
+    if (m_Flag == RSPInstructionFlag::Unknown)
     {
         AnalyzeInstruction();
     }
@@ -319,7 +318,7 @@ RSPInstructionFlag RSPInstruction::Flag() const
 
 uint32_t RSPInstruction::DestReg() const
 {
-    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
+    if (m_Flag == RSPInstructionFlag::Unknown)
     {
         AnalyzeInstruction();
     }
@@ -328,7 +327,7 @@ uint32_t RSPInstruction::DestReg() const
 
 uint32_t RSPInstruction::SourceReg0() const
 {
-    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
+    if (m_Flag == RSPInstructionFlag::Unknown)
     {
         AnalyzeInstruction();
     }
@@ -337,7 +336,7 @@ uint32_t RSPInstruction::SourceReg0() const
 
 uint32_t RSPInstruction::SourceReg1() const
 {
-    if (m_Flag == RSPInstructionFlag::InvalidOpcode)
+    if (m_Flag == RSPInstructionFlag::Unknown)
     {
         AnalyzeInstruction();
     }
@@ -348,23 +347,6 @@ void RSPInstruction::AnalyzeInstruction() const
 {
     switch (m_Instruction.op)
     {
-    case RSP_REGIMM:
-        switch (m_Instruction.rt)
-        {
-        case RSP_REGIMM_BLTZ:
-        case RSP_REGIMM_BLTZAL:
-        case RSP_REGIMM_BGEZ:
-        case RSP_REGIMM_BGEZAL:
-            m_Flag = RSPInstructionFlag::Branch;
-            m_SourceReg0 = m_Instruction.rs;
-            m_SourceReg1 = UNUSED_OPERAND;
-            break;
-
-        default:
-            m_Flag = RSPInstructionFlag::InvalidOpcode;
-            break;
-        }
-        break;
     case RSP_SPECIAL:
         switch (m_Instruction.funct)
         {
@@ -400,10 +382,26 @@ void RSPInstruction::AnalyzeInstruction() const
             m_SourceReg1 = m_Instruction.rt;
             m_Flag = RSPInstructionFlag::GPROperation;
             break;
-
         case RSP_SPECIAL_JR:
-            m_Flag = RSPInstructionFlag::Jump;
-            m_SourceReg0 = UNUSED_OPERAND;
+        case RSP_SPECIAL_JALR:
+            m_Flag = RSPInstructionFlag::JumpRegister;
+            m_SourceReg0 = m_Instruction.rs;
+            m_SourceReg1 = UNUSED_OPERAND;
+            break;
+        default:
+            m_Flag = RSPInstructionFlag::InvalidOpcode;
+            break;
+        }
+        break;
+    case RSP_REGIMM:
+        switch (m_Instruction.rt)
+        {
+        case RSP_REGIMM_BLTZ:
+        case RSP_REGIMM_BLTZAL:
+        case RSP_REGIMM_BGEZ:
+        case RSP_REGIMM_BGEZAL:
+            m_Flag = RSPInstructionFlag::Branch;
+            m_SourceReg0 = m_Instruction.rs;
             m_SourceReg1 = UNUSED_OPERAND;
             break;
 

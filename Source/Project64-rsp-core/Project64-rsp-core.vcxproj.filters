@@ -150,6 +150,9 @@
     <ClCompile Include="Recompiler\RspCodeBlock.cpp">
       <Filter>Source Files\Recompiler</Filter>
     </ClCompile>
+    <ClCompile Include="Recompiler\RspRecompilerOps-x64.cpp">
+      <Filter>Source Files\Recompiler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cpu\RSPInstruction.h">
@@ -246,6 +249,9 @@
       <Filter>Header Files\Recompiler</Filter>
     </ClInclude>
     <ClInclude Include="Recompiler\RspCodeBlock.h">
+      <Filter>Header Files\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Recompiler\RspRecompilerOps-x64.h">
       <Filter>Header Files\Recompiler</Filter>
     </ClInclude>
   </ItemGroup>

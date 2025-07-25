@@ -2,16 +2,68 @@
 #include <Common/StdString.h>
 #include <Project64-rsp-core/cpu/RspSystem.h>
 
-RspCodeBlock::RspCodeBlock(CRSPSystem & System, uint32_t StartAddress, RspCodeType type) :
+RspCodeBlock::RspCodeBlock(CRSPSystem & System, uint32_t StartAddress, RspCodeType type, RspCodeBlocks & Functions) :
+    m_Functions(Functions),
     m_System(System),
     m_StartAddress(StartAddress),
     m_CodeType(type),
+    m_CompiledLoction(nullptr),
     m_Valid(true)
 {
     Analyze();
 }
 
-bool RspCodeBlock::Valid() const
+const RspCodeBlock::Addresses & RspCodeBlock::GetBranchTargets() const
+{
+    return m_BranchTargets;
+}
+
+void * RspCodeBlock::GetCompiledLocation() const
+{
+    return m_CompiledLoction;
+}
+
+const RspCodeBlock::Addresses & RspCodeBlock::GetFunctionCalls() const
+{
+    return m_FunctionCalls;
+}
+
+const RSPInstructions & RspCodeBlock::GetInstructions() const
+{
+    return m_Instructions;
+}
+
+const RspCodeBlock * RspCodeBlock::GetFunctionBlock(uint32_t Address) const
+{
+    RspCodeBlocks::const_iterator itr = m_Functions.find(Address);
+    if (itr != m_Functions.end())
+    {
+        return itr->second.get();
+    }
+    return nullptr;
+}
+
+uint32_t RspCodeBlock::GetStartAddress() const
+{
+    return m_StartAddress;
+}
+
+void RspCodeBlock::SetCompiledLocation(void * CompiledLoction)
+{
+    m_CompiledLoction = CompiledLoction;
+}
+
+RspCodeType RspCodeBlock::CodeType() const
+{
+    return m_CodeType;
+}
+
+bool RspCodeBlock::IsEnd(uint32_t Address) const
+{
+    return m_End.find(Address) != m_End.end();
+}
+
+bool RspCodeBlock::IsValid() const
 {
     return m_Valid;
 }
@@ -30,7 +82,22 @@ void RspCodeBlock::Analyze(void)
     for (;;)
     {
         RSPInstruction Instruction(Address, *(uint32_t *)(IMEM + (Address & 0xFFF)));
-        if (Instruction.IsConditionalBranch())
+        if (Instruction.IsJump() && Instruction.Value() == J_0x1118)
+        {
+            if (std::find(m_End.begin(), m_End.end(), Address) == m_End.end())
+            {
+                m_End.insert(Address);
+            }
+        }
+        else if (Instruction.IsJump())
+        {
+            uint32_t target = Instruction.JumpTarget();
+            if (std::find(m_BranchTargets.begin(), m_BranchTargets.end(), target) == m_BranchTargets.end())
+            {
+                m_BranchTargets.insert(target);
+            }
+        }
+        else if (Instruction.IsConditionalBranch())
         {
             uint32_t target = Instruction.ConditionalBranchTarget();
             if (std::find(m_BranchTargets.begin(), m_BranchTargets.end(), target) == m_BranchTargets.end())
@@ -75,12 +142,15 @@ void RspCodeBlock::Analyze(void)
     }
     for (Addresses::iterator itr = m_FunctionCalls.begin(); itr != m_FunctionCalls.end(); itr++)
     {
-        RspCodeBlockPtr FunctionCall = std::make_unique<RspCodeBlock>(m_System, *itr, RspCodeType_SUBROUTINE);
-        if (!FunctionCall->Valid())
+        if (m_Functions.find(*itr) == m_Functions.end())
         {
-            m_Valid = false;
-            return;
+            RspCodeBlockPtr FunctionCall = std::make_unique<RspCodeBlock>(m_System, *itr, RspCodeType_SUBROUTINE, m_Functions);
+            if (!FunctionCall->IsValid())
+            {
+                m_Valid = false;
+                return;
+            }
+            m_Functions[*itr] = std::move(FunctionCall);
         }
-        m_FunctionBlocks.push_back(std::move(FunctionCall));
     }
 }
