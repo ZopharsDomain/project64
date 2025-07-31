@@ -2,9 +2,11 @@
 #if defined(__amd64__) || defined(_M_X64)
 
 #include "asmjit.h"
+#include <Project64-rsp-core/Recompiler/RspCodeBlock.h>
 #include <Project64-rsp-core/Recompiler/RspRecompilerOps-x64.h>
 #include <Project64-rsp-core/cpu/RSPOpcode.h>
 #include <Project64-rsp-core/cpu/RspPipelineStage.h>
+#include <memory>
 #include <unordered_map>
 
 class CRSPSystem;
@@ -23,7 +25,7 @@ public:
     ~CRSPRecompiler();
 
     void Reset();
-    void * CompileHLETask(uint32_t Address);
+    void * CompileHLETask(uint32_t Address, RspCodeBlocks & Functions, const uint32_t EndBlockAddress);
     void Log(_Printf_format_string_ const char * Text, ...);
 
     static void * GetAddressOf(int32_t value, ...);
@@ -33,7 +35,7 @@ private:
     CRSPRecompiler(const CRSPRecompiler &);
     CRSPRecompiler & operator=(const CRSPRecompiler &);
 
-    void AddBranchJump(uint32_t Target, asmjit::Label Jump);
+    void AddBranchJump(uint32_t Target);
     bool FindBranchJump(uint32_t Target, asmjit::Label & Jump);
     void BuildRecompilerCPU(void);
     void CompileCodeBlock(RspCodeBlock & block);

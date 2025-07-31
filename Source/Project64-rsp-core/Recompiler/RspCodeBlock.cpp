@@ -2,8 +2,9 @@
 #include <Common/StdString.h>
 #include <Project64-rsp-core/cpu/RspSystem.h>
 
-RspCodeBlock::RspCodeBlock(CRSPSystem & System, uint32_t StartAddress, RspCodeType type, RspCodeBlocks & Functions) :
+RspCodeBlock::RspCodeBlock(CRSPSystem & System, uint32_t StartAddress, RspCodeType type, uint32_t EndBlockAddress, RspCodeBlocks & Functions) :
     m_Functions(Functions),
+    m_EndBlockAddress(EndBlockAddress),
     m_System(System),
     m_StartAddress(StartAddress),
     m_CodeType(type),
@@ -21,6 +22,11 @@ const RspCodeBlock::Addresses & RspCodeBlock::GetBranchTargets() const
 void * RspCodeBlock::GetCompiledLocation() const
 {
     return m_CompiledLoction;
+}
+
+uint32_t RspCodeBlock::GetEndBlockAddress() const
+{
+    return m_EndBlockAddress;
 }
 
 const RspCodeBlock::Addresses & RspCodeBlock::GetFunctionCalls() const
@@ -73,36 +79,37 @@ void RspCodeBlock::Analyze(void)
     uint32_t Address = m_StartAddress;
     uint8_t * IMEM = m_System.m_IMEM;
 
-    enum EndHleTaskOp
-    {
-        J_0x1118 = 0x09000446
-    };
-
     bool FoundEnd = false;
     for (;;)
     {
         RSPInstruction Instruction(Address, *(uint32_t *)(IMEM + (Address & 0xFFF)));
-        if (Instruction.IsJump() && Instruction.Value() == J_0x1118)
-        {
-            if (std::find(m_End.begin(), m_End.end(), Address) == m_End.end())
-            {
-                m_End.insert(Address);
-            }
-        }
-        else if (Instruction.IsJump())
+        if (Instruction.IsJump())
         {
             uint32_t target = Instruction.JumpTarget();
-            if (std::find(m_BranchTargets.begin(), m_BranchTargets.end(), target) == m_BranchTargets.end())
+            if (target == m_EndBlockAddress)
             {
-                m_BranchTargets.insert(target);
+                if (std::find(m_End.begin(), m_End.end(), Address) == m_End.end())
+                {
+                    m_End.insert(Address);
+                }
+            }
+            else
+            {
+                if (std::find(m_BranchTargets.begin(), m_BranchTargets.end(), target) == m_BranchTargets.end())
+                {
+                    m_BranchTargets.insert(target);
+                }
             }
         }
         else if (Instruction.IsConditionalBranch())
         {
             uint32_t target = Instruction.ConditionalBranchTarget();
-            if (std::find(m_BranchTargets.begin(), m_BranchTargets.end(), target) == m_BranchTargets.end())
+            if (target != m_EndBlockAddress)
             {
-                m_BranchTargets.insert(target);
+                if (std::find(m_BranchTargets.begin(), m_BranchTargets.end(), target) == m_BranchTargets.end())
+                {
+                    m_BranchTargets.insert(target);
+                }
             }
         }
         else if (Instruction.IsStaticCall())
@@ -120,7 +127,7 @@ void RspCodeBlock::Analyze(void)
             break;
         }
         if ((m_CodeType == RspCodeType_SUBROUTINE && Instruction.IsJumpReturn()) ||
-            (m_CodeType == RspCodeType_TASK && Instruction.Value() == J_0x1118))
+            (m_CodeType == RspCodeType_TASK && Instruction.IsJump() && Instruction.JumpTarget() == m_EndBlockAddress))
         {
             bool JumpBeyond = false;
             for (Addresses::iterator itr = m_BranchTargets.begin(); itr != m_BranchTargets.end(); itr++)
@@ -144,7 +151,7 @@ void RspCodeBlock::Analyze(void)
     {
         if (m_Functions.find(*itr) == m_Functions.end())
         {
-            RspCodeBlockPtr FunctionCall = std::make_unique<RspCodeBlock>(m_System, *itr, RspCodeType_SUBROUTINE, m_Functions);
+            RspCodeBlockPtr FunctionCall = std::make_unique<RspCodeBlock>(m_System, *itr, RspCodeType_SUBROUTINE, m_EndBlockAddress, m_Functions);
             if (!FunctionCall->IsValid())
             {
                 m_Valid = false;

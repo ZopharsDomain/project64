@@ -24,10 +24,11 @@ class RspCodeBlock
 public:
     typedef std::set<uint32_t> Addresses;
 
-    RspCodeBlock(CRSPSystem & System, uint32_t StartAddress, RspCodeType type, RspCodeBlocks & Functions);
+    RspCodeBlock(CRSPSystem & System, uint32_t StartAddress, RspCodeType type, uint32_t EndBlockAddress, RspCodeBlocks & Functions);
 
     const Addresses & GetBranchTargets() const;
     void * GetCompiledLocation() const;
+    uint32_t GetEndBlockAddress() const;
     const Addresses & GetFunctionCalls() const;
     const RSPInstructions & GetInstructions() const;
     const RspCodeBlock * GetFunctionBlock(uint32_t Address) const;
@@ -45,6 +46,7 @@ private:
     void Analyze();
 
     RspCodeBlocks & m_Functions;
+    const uint32_t m_EndBlockAddress;
     RSPInstructions m_Instructions;
     uint32_t m_StartAddress;
     RspCodeType m_CodeType;

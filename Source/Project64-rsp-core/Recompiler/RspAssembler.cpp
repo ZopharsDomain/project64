@@ -69,32 +69,31 @@ asmjit::Error RspAssembler::_log(const char * data, size_t size) noexcept
     if (m_LabelSymbols.size() > 0 && Pos != std::string::npos)
     {
         size_t len = AsmjitLog.length();
-        uint32_t Value = 0;
+        uint32_t Value = 0, valueLen = 0;
         for (int i = 0; i < 8 && (Pos + 1 + i) < len; i++)
         {
             char c = AsmjitLog[Pos + 1 + i];
             if (c >= '0' && c <= '9')
             {
                 Value = (Value * 10) + (c - '0');
+                valueLen += 1;
             }
             else
             {
                 break;
             }
         }
-        NumberSymbolMap::iterator itr = m_LabelSymbols.find(Value);
-        if (itr != m_LabelSymbols.end())
+        if (valueLen > 0)
         {
-            std::string::size_type endPos = Pos + 1;
-            for (std::string::size_type LenSize = AsmjitLog.length(); (endPos < LenSize && isdigit((unsigned char)AsmjitLog[endPos])); endPos++)
+            LabelSymbolMap::iterator itr = m_LabelSymbols.find(Value);
+            if (itr != m_LabelSymbols.end())
             {
-            }
-            std::string LabelStr = AsmjitLog.substr(Pos, endPos - Pos);
-            AsmjitLog.replace(Pos, LabelStr.length(), itr->second.Symbol);
-            itr->second.Count -= 1;
-            if (itr->second.Count == 0)
-            {
-                m_LabelSymbols.erase(itr);
+                std::string::size_type endPos = Pos + 1;
+                for (std::string::size_type LenSize = AsmjitLog.length(); (endPos < LenSize && isdigit((unsigned char)AsmjitLog[endPos])); endPos++)
+                {
+                }
+                std::string LabelStr = AsmjitLog.substr(Pos, endPos - Pos);
+                AsmjitLog.replace(Pos, LabelStr.length(), itr->second);
             }
         }
     }
@@ -138,6 +137,15 @@ void RspAssembler::CompConstToVariable(void * Variable, const char * VariableNam
         AddNumberSymbol((uint64_t)Variable, VariableName);
     }
     cmp(asmjit::x86::dword_ptr((uint64_t)Variable), Const);
+}
+
+void RspAssembler::CompX86regToVariable(void * Variable, const char * VariableName, const asmjit::x86::Gp & Reg)
+{
+    if (LogAsmCode)
+    {
+        AddNumberSymbol((uint64_t)Variable, VariableName);
+    }
+    cmp(Reg, asmjit::x86::dword_ptr((uint64_t)Variable));
 }
 
 void RspAssembler::JeLabel(const char * LabelName, asmjit::Label & JumpLabel)
@@ -221,23 +229,30 @@ void RspAssembler::MoveX86regToVariable(void * Variable, const char * VariableNa
     mov(asmjit::x86::dword_ptr((uint64_t)(Variable)), Reg);
 }
 
+void RspAssembler::SetgVariable(void * Variable, const char * VariableName)
+{
+    if (LogAsmCode)
+    {
+        AddNumberSymbol((uint64_t)Variable, VariableName);
+    }
+    setg(asmjit::x86::byte_ptr((uint64_t)Variable));
+}
+
+void RspAssembler::SetzVariable(void * Variable, const char * VariableName)
+{
+    if (LogAsmCode)
+    {
+        AddNumberSymbol((uint64_t)Variable, VariableName);
+    }
+    setz(asmjit::x86::byte_ptr((uint64_t)Variable));
+}
+
 void RspAssembler::AddLabelSymbol(const asmjit::Label & Label, const char * Symbol)
 {
-    NumberSymbolMap::iterator itr = m_LabelSymbols.find(Label.id());
-    if (itr != m_LabelSymbols.end())
+    LabelSymbolMap::iterator itr = m_LabelSymbols.find(Label.id());
+    if (itr == m_LabelSymbols.end())
     {
-        if (strcmp(itr->second.Symbol.c_str(), Symbol) == 0)
-        {
-            itr->second.Count += 2;
-        }
-        else
-        {
-            __debugbreak();
-        }
-    }
-    else
-    {
-        m_LabelSymbols.emplace(std::make_pair(Label.id(), NumberSymbol{Symbol, 2}));
+        m_LabelSymbols.emplace(std::make_pair(Label.id(), Symbol));
     }
 }
 

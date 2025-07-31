@@ -17,6 +17,8 @@ extern p_Recompfunc RSP_Recomp_Vector[64];
 extern p_Recompfunc RSP_Recomp_Lc2[32];
 extern p_Recompfunc RSP_Recomp_Sc2[32];
 
+uint32_t BranchCompare = 0;
+
 CRSPRecompilerOps::CRSPRecompilerOps(CRSPSystem & System, CRSPRecompiler & Recompiler) :
     m_System(System),
     m_Recompiler(Recompiler),
@@ -61,14 +63,14 @@ void CRSPRecompilerOps::J(void)
     {
         uint32_t Target = (m_OpCode.target << 2) & 0x1FFC;
         asmjit::Label Jump;
-        if (m_Recompiler.FindBranchJump(Target, Jump))
-        {
-            m_Assembler->JmpLabel(stdstr_f("0x%X", Target).c_str(), Jump);
-        }
-        else if (m_CurrentBlock->IsEnd(m_CompilePC))
+        if (m_CurrentBlock->IsEnd(m_CompilePC) && m_CurrentBlock->CodeType() == RspCodeType_TASK)
         {
             m_Assembler->MoveConstToVariable(m_System.m_SP_PC_REG, "RSP PC", Target);
             ExitCodeBlock();
+        }
+        else if (m_Recompiler.FindBranchJump(Target, Jump))
+        {
+            m_Assembler->JmpLabel(stdstr_f("0x%X", Target).c_str(), Jump);
         }
         else
         {
@@ -146,24 +148,21 @@ void CRSPRecompilerOps::BEQ(void)
             m_NextInstruction = RSPPIPELINE_DO_DELAY_SLOT;
             return;
         }
-        g_Notify->BreakPoint(__FILE__, __LINE__);
-#ifdef tofix
         if (m_OpCode.rt == 0)
         {
-            CompConstToVariable(0, &m_GPR[m_OpCode.rs].W, GPR_Name(m_OpCode.rs));
+            m_Assembler->CompConstToVariable(&m_GPR[m_OpCode.rs].W, GPR_Name(m_OpCode.rs), 0);
         }
         else if (m_OpCode.rs == 0)
         {
-            CompConstToVariable(0, &m_GPR[m_OpCode.rt].W, GPR_Name(m_OpCode.rt));
+            m_Assembler->CompConstToVariable(&m_GPR[m_OpCode.rt].W, GPR_Name(m_OpCode.rt), 0);
         }
         else
         {
-            MoveVariableToX86reg(&m_GPR[m_OpCode.rt].W, GPR_Name(m_OpCode.rt), x86_EAX);
-            CompX86regToVariable(x86_EAX, &m_GPR[m_OpCode.rs].W, GPR_Name(m_OpCode.rs));
+            m_Assembler->MoveVariableToX86reg(asmjit::x86::r11, &m_GPR[m_OpCode.rt].W, GPR_Name(m_OpCode.rt));
+            m_Assembler->CompX86regToVariable(&m_GPR[m_OpCode.rs].W, GPR_Name(m_OpCode.rs), asmjit::x86::r11);
         }
-        SetzVariable(&BranchCompare, "BranchCompare");
+        m_Assembler->SetzVariable(&BranchCompare, "BranchCompare");
         m_NextInstruction = RSPPIPELINE_DO_DELAY_SLOT;
-#endif
     }
     else if (m_NextInstruction == RSPPIPELINE_DELAY_SLOT_DONE)
     {
@@ -182,7 +181,6 @@ void CRSPRecompilerOps::BEQ(void)
 
         if (m_OpCode.rs == 0 && m_OpCode.rt == 0)
         {
-            m_NextInstruction = RSPPIPELINE_NORMAL;
             return;
         }
 
@@ -204,22 +202,34 @@ void CRSPRecompilerOps::BEQ(void)
                 m_Assembler->CompX86regToVariable(x86_EAX, &m_GPR[m_OpCode.rs].W, GPR_Name(m_OpCode.rs));
 #endif
             }
+            if (Target == m_CurrentBlock->GetEndBlockAddress())
+            {
+                asmjit::Label ContinueLabel = m_Assembler->newLabel();
+                m_Assembler->JneLabel(stdstr_f("Continue-%X", m_CompilePC).c_str(), ContinueLabel);
+                m_Assembler->MoveConstToVariable(m_System.m_SP_PC_REG, "RSP PC", Target);
+                ExitCodeBlock();
+                m_Assembler->bind(ContinueLabel);
+            }
+            else
+            {
+                asmjit::Label Jump;
+                if (!m_Recompiler.FindBranchJump(Target, Jump))
+                {
+                    g_Notify->BreakPoint(__FILE__, __LINE__);
+                }
+                m_Assembler->JeLabel(stdstr_f("0x%X", Target).c_str(), Jump);
+            }
+        }
+        else
+        {
             asmjit::Label Jump;
             if (!m_Recompiler.FindBranchJump(Target, Jump))
             {
                 g_Notify->BreakPoint(__FILE__, __LINE__);
             }
+            m_Assembler->CompConstToVariable(&BranchCompare, "BranchCompare", true);
             m_Assembler->JeLabel(stdstr_f("0x%X", Target).c_str(), Jump);
         }
-        else
-        {
-            g_Notify->BreakPoint(__FILE__, __LINE__);
-#ifdef tofix
-            CompConstToVariable(true, &BranchCompare, "BranchCompare");
-            JeLabel32("BranchEqual", 0);
-#endif
-        }
-        m_NextInstruction = RSPPIPELINE_NORMAL;
     }
     else if (m_NextInstruction == RSPPIPELINE_DELAY_SLOT_EXIT_DONE)
     {
@@ -283,7 +293,6 @@ void CRSPRecompilerOps::BNE(void)
 
         if (m_OpCode.rs == 0 && m_OpCode.rt == 0)
         {
-            m_NextInstruction = RSPPIPELINE_NORMAL;
             return;
         }
 
@@ -321,7 +330,6 @@ void CRSPRecompilerOps::BNE(void)
             JeLabel32("BranchNotEqual", 0);
 #endif
         }
-        m_NextInstruction = RSPPIPELINE_NORMAL;
     }
     else if (m_NextInstruction == RSPPIPELINE_DELAY_SLOT_EXIT_DONE)
     {
@@ -436,12 +444,9 @@ void CRSPRecompilerOps::BGTZ(void)
             m_NextInstruction = RSPPIPELINE_DO_DELAY_SLOT;
             return;
         }
-        g_Notify->BreakPoint(__FILE__, __LINE__);
-#ifdef tofix
-        CompConstToVariable(0, &m_GPR[m_OpCode.rs].W, GPR_Name(m_OpCode.rs));
-        SetgVariable(&BranchCompare, "BranchCompare");
+        m_Assembler->CompConstToVariable(&m_GPR[m_OpCode.rs].W, GPR_Name(m_OpCode.rs), 0);
+        m_Assembler->SetgVariable(&BranchCompare, "BranchCompare");
         m_NextInstruction = RSPPIPELINE_DO_DELAY_SLOT;
-#endif
     }
     else if (m_NextInstruction == RSPPIPELINE_DELAY_SLOT_DONE)
     {
@@ -455,24 +460,20 @@ void CRSPRecompilerOps::BGTZ(void)
 #endif
             return;
         }
+        asmjit::Label Jump;
+        if (!m_Recompiler.FindBranchJump(Target, Jump))
+        {
+            g_Notify->BreakPoint(__FILE__, __LINE__);
+        }
         if (!m_DelayAffectBranch)
         {
             m_Assembler->CompConstToVariable(&m_GPR[m_OpCode.rs].W, GPR_Name(m_OpCode.rs), 0);
-            asmjit::Label Jump;
-            if (!m_Recompiler.FindBranchJump(Target, Jump))
-            {
-                g_Notify->BreakPoint(__FILE__, __LINE__);
-            }
             m_Assembler->JgLabel(stdstr_f("0x%X", Target).c_str(), Jump);
         }
         else
         {
-            // Take a look at the branch compare variable
-            g_Notify->BreakPoint(__FILE__, __LINE__);
-#ifdef tofix
-            CompConstToVariable(true, &BranchCompare, "BranchCompare");
-            JeLabel32("BranchGreater", 0);
-#endif
+            m_Assembler->CompConstToVariable(&BranchCompare, "BranchCompare", true);
+            m_Assembler->JeLabel(stdstr_f("0x%X", Target).c_str(), Jump);
         }
     }
     else if (m_NextInstruction == RSPPIPELINE_DELAY_SLOT_EXIT_DONE)
@@ -560,12 +561,12 @@ void CRSPRecompilerOps::LW(void)
 
 void CRSPRecompilerOps::LBU(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::LBU, "RSPOp::LBU");
 }
 
 void CRSPRecompilerOps::LHU(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::LHU, "RSPOp::LHU");
 }
 
 void CRSPRecompilerOps::LWU(void)
@@ -627,7 +628,7 @@ void CRSPRecompilerOps::Special_SLLV(void)
 
 void CRSPRecompilerOps::Special_SRLV(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::Special_SRLV, "RSPOp::Special_SRLV");
 }
 
 void CRSPRecompilerOps::Special_SRAV(void)
@@ -793,7 +794,7 @@ void CRSPRecompilerOps::Cop0_MT(void)
 
 void CRSPRecompilerOps::Cop2_MF(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::Cop2_MF, "RSPOp::Cop2_MF");
 }
 
 void CRSPRecompilerOps::Cop2_CF(void)
@@ -860,12 +861,12 @@ void CRSPRecompilerOps::Vector_VMUDN(void)
 
 void CRSPRecompilerOps::Vector_VMUDH(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::Vector_VMUDH, "RSPOp::Vector_VMUDH");
 }
 
 void CRSPRecompilerOps::Vector_VMACF(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::Vector_VMACF, "RSPOp::Vector_VMACF");
 }
 
 void CRSPRecompilerOps::Vector_VMACU(void)
@@ -920,12 +921,12 @@ void CRSPRecompilerOps::Vector_VADDC(void)
 
 void CRSPRecompilerOps::Vector_VSUBC(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::Vector_VSUBC, "RSPOp::Vector_VSUBC");
 }
 
 void CRSPRecompilerOps::Vector_VSAW(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::Vector_VSAW, "RSPOp::Vector_VSAW");
 }
 
 void CRSPRecompilerOps::Vector_VLT(void)
@@ -945,12 +946,12 @@ void CRSPRecompilerOps::Vector_VNE(void)
 
 void CRSPRecompilerOps::Vector_VGE(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::Vector_VGE, "RSPOp::Vector_VGE");
 }
 
 void CRSPRecompilerOps::Vector_VCL(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::Vector_VCL, "RSPOp::Vector_VCL");
 }
 
 void CRSPRecompilerOps::Vector_VCH(void)
@@ -970,7 +971,7 @@ void CRSPRecompilerOps::Vector_VMRG(void)
 
 void CRSPRecompilerOps::Vector_VAND(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::Vector_VAND, "RSPOp::Vector_VAND");
 }
 
 void CRSPRecompilerOps::Vector_VNAND(void)
@@ -1071,7 +1072,7 @@ void CRSPRecompilerOps::Opcode_LQV(void)
 
 void CRSPRecompilerOps::Opcode_LRV(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::LRV, "RSPOp::LRV");
 }
 
 void CRSPRecompilerOps::Opcode_LPV(void)
@@ -1118,7 +1119,7 @@ void CRSPRecompilerOps::Opcode_SSV(void)
 
 void CRSPRecompilerOps::Opcode_SLV(void)
 {
-    g_Notify->BreakPoint(__FILE__, __LINE__);
+    Cheat_r4300iOpcode(&RSPOp::SLV, "RSPOp::SLV");
 }
 
 void CRSPRecompilerOps::Opcode_SDV(void)
@@ -1176,7 +1177,7 @@ void CRSPRecompilerOps::UnknownOpcode(void)
 void CRSPRecompilerOps::EnterCodeBlock(void)
 {
     m_Assembler->sub(asmjit::x86::rsp, 40);
-    if (Profiling)
+    if (Profiling && m_CurrentBlock->CodeType() == RspCodeType_TASK)
     {
         m_Assembler->mov(asmjit::x86::rcx, asmjit::imm((uintptr_t)m_CompilePC));
         m_Assembler->CallFunc(AddressOf(&StartTimer), "StartTimer");
@@ -1185,7 +1186,7 @@ void CRSPRecompilerOps::EnterCodeBlock(void)
 
 void CRSPRecompilerOps::ExitCodeBlock(void)
 {
-    if (Profiling)
+    if (Profiling && m_CurrentBlock->CodeType() == RspCodeType_TASK)
     {
         m_Assembler->CallFunc(AddressOf(&StopTimer), "StopTimer");
     }

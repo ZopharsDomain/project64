@@ -1,4 +1,5 @@
 #include <Project64-rsp-core/Hle/HleTask.h>
+#include <Project64-rsp-core/Recompiler/RspCodeBlock.h>
 #include <Project64-rsp-core/Recompiler/RspProfiling.h>
 #include <Project64-rsp-core/cpu/RSPRegisterHandlerPlugin.h>
 #include <Project64-rsp-core/cpu/RspMemory.h>
@@ -74,12 +75,13 @@ void CHleTask::SetupCommandList(const TASK_INFO & TaskInfo)
     m_TaskFunctions = nullptr;
 
     TaskFunctions JumpFunctions;
+    RspCodeBlocks Functions;
     for (uint32_t i = 0, n = JumpTableLength; i < n; i++)
     {
         uint16_t FuncAddress = *((uint16_t *)(m_DMEM + (((i << 1) + JumpTablePos) ^ 2)));
         if (FuncAddress != 0x1118)
         {
-            void * FuncPtr = m_Recompiler.CompileHLETask(FuncAddress);
+            void * FuncPtr = m_Recompiler.CompileHLETask(FuncAddress, Functions, 0x1118);
             JumpFunctions.emplace_back(TaskFunctionAddress(FuncAddress, FuncPtr));
         }
         else
