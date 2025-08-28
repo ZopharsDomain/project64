@@ -98,7 +98,8 @@ uint32_t DoRspCycles(uint32_t Cycles)
 #if defined(__amd64__) || defined(_M_X64)
     if (CRSPSettings::CPUMethod() == RSPCpuMethod::RecompilerTasks)
     {
-        if (!RSPSystem.IsHleTask() || !RSPSystem.HleTaskRecompiler())
+        HLETaskBooter booter = RSPSystem.IsHleTask();
+        if (booter == HLETaskBooter::unknown || !RSPSystem.HleTaskRecompiler(booter))
         {
             if (g_RSPDebugger != nullptr)
             {

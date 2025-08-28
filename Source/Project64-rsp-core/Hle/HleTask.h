@@ -11,6 +11,13 @@ class RSPRegisterHandlerPlugin;
 class CRSPRecompiler;
 class CHle;
 
+enum class HLETaskBooter
+{
+    unknown,
+    Boot_B4C62BFC,
+    Boot_CAB15710,
+};
+
 class CHleTask :
     private CGPRRegisters
 {
@@ -47,18 +54,19 @@ class CHleTask :
 public:
     CHleTask(CRSPSystem & System);
 
-    bool IsHleTask(void);
+    HLETaskBooter IsHleTask(void);
     bool ProcessHleTask(void);
-    bool HleTaskRecompiler(void);
+    bool HleTaskRecompiler(HLETaskBooter booter);
 
 private:
     CHleTask(void);
     CHleTask(const CHleTask & copy);
     CHleTask & operator=(const CHleTask & rhs);
 
-    void SetupCommandList(const TASK_INFO & TaskInfo);
+    void SetupCommandList(const TASK_INFO & TaskInfo, HLETaskBooter bootType);
     void ExecuteTask_1a13a51a(const TASK_INFO & TaskInfo);
-    void SetupTask(const TASK_INFO & TaskInfo);
+    void SetupTask_CAB15710(const TASK_INFO & TaskInfo);
+    void SetupTask_B4C62BFC(const TASK_INFO & TaskInfo);
 
     void (*&CheckInterrupts)(void);
     void (*&ProcessDList)(void);
